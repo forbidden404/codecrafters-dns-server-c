@@ -64,8 +64,8 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %d bytes: %s\n", bytesRead, buffer);
 
-    DNSHeader header = dns_header_new(1234, 0, 0, 0, 0, 0);
-    dns_header_set(header, QR, 1);
+    struct flags f = {1, 0, 0, 0, 0, 0, 0, 0};
+    DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
 
     // Send response
     if (sendto(udpSocket, header, sizeof(*header), 0,

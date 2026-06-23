@@ -4,34 +4,30 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+#pragma pack(push, 1)
 typedef struct dns_header {
   uint16_t packet_identifier;
-  uint16_t qr_to_rcode;
+  struct flags {
+    uint16_t qr : 1;
+    uint16_t opcode : 4;
+    uint16_t aa : 1;
+    uint16_t tc : 1;
+    uint16_t rd : 1;
+    uint16_t ra : 1;
+    uint16_t z : 3;
+    uint16_t rcode : 4;
+  } flags;
   uint16_t qdcount;
   uint16_t ancount;
   uint16_t nscount;
   uint16_t arcount;
 } *DNSHeader;
+#pragma pack(pop)
 
-enum qr_to_rcode_options {
-  QR = 15,
-  OPCODE = 11,
-  AA = 10,
-  TC = 9,
-  RD = 8,
-  RA = 7,
-  Z = 4,
-  RCODE = 0,
-};
-
-DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t qr_to_rcode,
+DNSHeader dns_header_new(uint16_t packet_identifier, struct flags flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount);
 DNSHeader dns_header_from_buffer(const char *buffer);
 void dns_header_delete(DNSHeader header);
-
-void dns_header_set(DNSHeader header, enum qr_to_rcode_options option,
-                    uint8_t value);
-uint8_t dns_header_get(DNSHeader header, enum qr_to_rcode_options option);
 
 #endif
