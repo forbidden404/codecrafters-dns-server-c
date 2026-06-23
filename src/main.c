@@ -64,7 +64,7 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %d bytes: %s\n", bytesRead, buffer);
 
-    struct flags f = {1, 0, 0, 0, 0, 0, 0, 0};
+    struct flags f = {htons(1), 0, 0, 0, 0, 0, 0, 0};
     DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
 
     // Send response
