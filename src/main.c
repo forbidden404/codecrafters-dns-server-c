@@ -64,11 +64,15 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %d bytes: %s\n", bytesRead, buffer);
 
-    struct flags f = {htons(1), 0, 0, 0, 0, 0, 0, 0};
+    struct flags f = {1, 0, 0, 0, 0, 0, 0, 0};
     DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
 
+    size_t message_length = sizeof(struct dns_header);
+    uint8_t *message = calloc(1, message_length);
+    memcpy(message, header, sizeof(*header));
+
     // Send response
-    if (sendto(udpSocket, header, sizeof(*header), 0,
+    if (sendto(udpSocket, message, message_length, 0,
                (struct sockaddr *)&clientAddress,
                sizeof(clientAddress)) == -1) {
       perror("Failed to send response");

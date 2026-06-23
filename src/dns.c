@@ -9,12 +9,21 @@ DNSHeader dns_header_new(uint16_t packet_identifier, struct flags flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount) {
   DNSHeader header = calloc(1, sizeof(*header));
-  header->packet_identifier = ntohs(packet_identifier);
-  header->flags = flags;
-  header->qdcount = ntohs(qdcount);
-  header->ancount = ntohs(ancount);
-  header->nscount = ntohs(nscount);
-  header->arcount = ntohs(arcount);
+  header->packet_identifier = htons(packet_identifier);
+
+  header->flags.aa = htons(flags.aa);
+  header->flags.opcode = htons(flags.opcode);
+  header->flags.qr = htons(flags.qr);
+  header->flags.ra = htons(flags.ra);
+  header->flags.rcode = htons(flags.rcode);
+  header->flags.rd = htons(flags.rd);
+  header->flags.tc = htons(flags.tc);
+  header->flags.z = htons(flags.z);
+
+  header->qdcount = htons(qdcount);
+  header->ancount = htons(ancount);
+  header->nscount = htons(nscount);
+  header->arcount = htons(arcount);
   return header;
 }
 
