@@ -11,14 +11,7 @@ DNSHeader dns_header_new(uint16_t packet_identifier, struct flags flags,
   DNSHeader header = calloc(1, sizeof(*header));
   header->packet_identifier = htons(packet_identifier);
 
-  header->flags.aa = htons(flags.aa);
-  header->flags.opcode = htons(flags.opcode);
-  header->flags.qr = htons(flags.qr);
-  header->flags.ra = htons(flags.ra);
-  header->flags.rcode = htons(flags.rcode);
-  header->flags.rd = htons(flags.rd);
-  header->flags.tc = htons(flags.tc);
-  header->flags.z = htons(flags.z);
+  memcpy(&header->flags, &flags, sizeof(flags));
 
   header->qdcount = htons(qdcount);
   header->ancount = htons(ancount);
