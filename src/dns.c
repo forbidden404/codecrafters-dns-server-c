@@ -1,5 +1,6 @@
 #include "dns.h"
 
+#include <arpa/inet.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,12 +19,12 @@ DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t qr_to_rcode,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount) {
   DNSHeader header = calloc(1, sizeof(*header));
-  header->packet_identifier = packet_identifier;
-  header->qr_to_rcode = qr_to_rcode;
-  header->qdcount = qdcount;
-  header->ancount = ancount;
-  header->nscount = nscount;
-  header->arcount = arcount;
+  header->packet_identifier = ntohs(packet_identifier);
+  header->qr_to_rcode = ntohs(qr_to_rcode);
+  header->qdcount = ntohs(qdcount);
+  header->ancount = ntohs(ancount);
+  header->nscount = ntohs(nscount);
+  header->arcount = ntohs(arcount);
   return header;
 }
 
@@ -54,7 +55,7 @@ void dns_header_delete(DNSHeader header) {
 
 void dns_header_set(DNSHeader header, enum qr_to_rcode_options option,
                     uint8_t value) {
-  header->qr_to_rcode |= (value & option);
+  header->qr_to_rcode |= (ntohs(value) & option);
 }
 
 uint8_t dns_header_get(DNSHeader header, enum qr_to_rcode_options option) {

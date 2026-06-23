@@ -64,7 +64,7 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %d bytes: %s\n", bytesRead, buffer);
 
-    DNSHeader header = dns_header_new(ntohs(1234), 0, 0, 0, 0, 0);
+    DNSHeader header = dns_header_new(1234, 0, 0, 0, 0, 0);
     dns_header_set(header, QR, 1);
 
     // Send response
