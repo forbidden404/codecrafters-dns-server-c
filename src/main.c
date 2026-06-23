@@ -64,7 +64,7 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %d bytes: %s\n", bytesRead, buffer);
 
-    struct flags f = {0, 0, 0, 0, 0, 0, 0, (uint8_t)ntohs(1)};
+    struct flags f = {0, 0, 0, 0, 0, 0, 0, ntohs(1)};
     DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
 
     size_t message_length = sizeof(*header);
