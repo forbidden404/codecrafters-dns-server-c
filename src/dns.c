@@ -55,9 +55,9 @@ void dns_header_delete(DNSHeader header) {
 
 void dns_header_set(DNSHeader header, enum qr_to_rcode_options option,
                     uint8_t value) {
-  header->qr_to_rcode |= (ntohs(value) & option);
+  header->qr_to_rcode |= (ntohs(value) & ntohs(option));
 }
 
 uint8_t dns_header_get(DNSHeader header, enum qr_to_rcode_options option) {
-  return header->qr_to_rcode & option;
+  return header->qr_to_rcode & ntohs(option);
 }
