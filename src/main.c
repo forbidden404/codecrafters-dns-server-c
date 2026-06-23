@@ -66,6 +66,7 @@ int main() {
 
     struct flags f = {1, 0, 0, 0, 0, 0, 0, 0};
     DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
+    header->flags.qr = (uint8_t)htons(1u);
 
     size_t message_length = sizeof(struct dns_header);
     uint8_t *message = calloc(1, message_length);
