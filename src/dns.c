@@ -9,14 +9,14 @@ DNSHeader dns_header_new(uint16_t packet_identifier, struct flags flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount) {
   DNSHeader header = calloc(1, sizeof(*header));
-  header->packet_identifier = htons(packet_identifier);
+  header->packet_identifier = ntohs(packet_identifier);
 
   memcpy(&header->flags, &flags, sizeof(flags));
 
-  header->qdcount = htons(qdcount);
-  header->ancount = htons(ancount);
-  header->nscount = htons(nscount);
-  header->arcount = htons(arcount);
+  header->qdcount = ntohs(qdcount);
+  header->ancount = ntohs(ancount);
+  header->nscount = ntohs(nscount);
+  header->arcount = ntohs(arcount);
   return header;
 }
 
