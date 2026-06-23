@@ -53,11 +53,42 @@ void dns_header_delete(DNSHeader header) {
   }
 }
 
+uint16_t range(enum qr_to_rcode_options option) {
+  switch (option) {
+  case QR:
+    return 1;
+  case OPCODE:
+    return 4;
+  case AA:
+    return 1;
+  case TC:
+    return 1;
+  case RD:
+    return 1;
+  case RA:
+    return 1;
+  case Z:
+    return 3;
+  case RCODE:
+    return 4;
+  }
+}
+
+uint16_t create_mask(uint16_t initial, uint16_t end) {
+  uint16_t mask = 0;
+  for (uint8_t i = initial; i <= end; i++) {
+    mask |= 1 << i;
+  }
+  return mask;
+}
+
 void dns_header_set(DNSHeader header, enum qr_to_rcode_options option,
                     uint8_t value) {
-  header->qr_to_rcode |= (ntohs(value) & ntohs(option));
+  uint16_t r = range(option);
+  uint16_t mask = create_mask(0, r - 1);
+  header->qr_to_rcode |= ((mask & value) << option);
 }
 
 uint8_t dns_header_get(DNSHeader header, enum qr_to_rcode_options option) {
-  return header->qr_to_rcode & ntohs(option);
+  return header->qr_to_rcode & option;
 }

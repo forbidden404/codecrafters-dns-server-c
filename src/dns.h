@@ -14,14 +14,14 @@ typedef struct dns_header {
 } *DNSHeader;
 
 enum qr_to_rcode_options {
-  QR = 0b1000000000000000,
-  OPCODE = 0b0111100000000000,
-  AA = 0b0000010000000000,
-  TC = 0b0000001000000000,
-  RD = 0b0000000100000000,
-  RA = 0b0000000010000000,
-  Z = 0b0000000001110000,
-  RCODE = 0b0000000000001111,
+  QR = 15,
+  OPCODE = 11,
+  AA = 10,
+  TC = 9,
+  RD = 8,
+  RA = 7,
+  Z = 4,
+  RCODE = 0,
 };
 
 DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t qr_to_rcode,
