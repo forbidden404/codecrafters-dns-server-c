@@ -1,5 +1,6 @@
 #include "dns.h"
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -63,8 +64,8 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %d bytes: %s\n", bytesRead, buffer);
 
-    DNSHeader header = dns_header_new(1234, 0, 0, 0, 0, 0);
-    dns_header_set(header, QR, 1);
+    DNSHeader header = dns_header_new(ntohs(1234), 0, 0, 0, 0, 0);
+    dns_header_set(header, QR, ntohs(1));
 
     // Send response
     if (sendto(udpSocket, header, sizeof(*header), 0,
