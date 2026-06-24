@@ -65,13 +65,14 @@ int main() {
     printf("Received %zd bytes: %s\n", bytesRead, buffer);
 
     DNSHeader header = dns_header_new(1234, 0x8000, 0, 0, 0, 0);
+    DNSQuestion question = dns_question_new("codecrafters.io", 1, 1);
 
-    size_t message_length = sizeof(header);
-    uint8_t *message = calloc(1, message_length);
-    memcpy(message, &header, message_length);
+    DNSMessage message = {.header = header, .question = question};
+
+    size_t message_length = sizeof(message);
 
     // Send response
-    if (sendto(udpSocket, message, message_length, 0,
+    if (sendto(udpSocket, &message, message_length, 0,
                (struct sockaddr *)&clientAddress,
                sizeof(clientAddress)) == -1) {
       perror("Failed to send response");
