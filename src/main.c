@@ -64,10 +64,9 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %zd bytes: %s\n", bytesRead, buffer);
 
-    struct flags f = {htons(1), 0, 0, 0, 0, 0, 0, htons(1)};
-    DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
+    DNSHeader header = dns_header_new(1234, 0x8000, 0, 0, 0, 0);
 
-    size_t message_length = 12;
+    size_t message_length = sizeof(header);
     uint8_t *message = calloc(1, message_length);
     memcpy(message, &header, message_length);
 

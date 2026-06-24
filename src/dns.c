@@ -5,19 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-DNSHeader dns_header_new(uint16_t packet_identifier, struct flags flags,
+DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount) {
-  DNSHeader header;
-  memset(&header, 0, sizeof(header));
+  DNSHeader header = {0};
   header.packet_identifier = htons(packet_identifier);
-
-  memcpy(&header.flags, &flags, sizeof(flags));
-
-  header.qdcount = ntohs(qdcount);
-  header.ancount = ntohs(ancount);
-  header.nscount = ntohs(nscount);
-  header.arcount = ntohs(arcount);
+  header.flags = htons(flags);
+  header.qdcount = htons(qdcount);
+  header.ancount = htons(ancount);
+  header.nscount = htons(nscount);
+  header.arcount = htons(arcount);
   return header;
 }
 
