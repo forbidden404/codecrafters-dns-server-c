@@ -34,24 +34,23 @@ DNSHeader dns_header_from_buffer(const char *buffer) {
   return header;
 }
 
-void encode_name(char *dst, size_t *dst_len, char *name) {
-  char *current, **marker, len, *tmp_dst;
-
-  current = name;
-  marker = &name;
-  tmp_dst = dst;
+void encode_name(uint8_t *dst, size_t *dst_len, uint8_t *name) {
+  uint8_t *current = name;
+  uint8_t *start = name;
+  uint8_t *begin = dst;
 
   while ((current - name) < DNS_QNAME_MAX_LEN) {
     if (*current == '.' || *current == 0) {
-      len = current - *marker;
+      uint8_t len = current - start;
+
       *dst++ = len;
-      memcpy(dst, *marker, len);
+      memcpy(dst, start, len);
       dst += len;
-      *marker = current + 1;
+      start = current + 1;
 
       if (*current == 0) {
         *dst = 0;
-        *dst_len = dst - tmp_dst + 1;
+        *dst_len = dst - begin + 1;
         break;
       }
     }
@@ -63,12 +62,12 @@ void encode_name(char *dst, size_t *dst_len, char *name) {
 DNSQuestion dns_question_new(char *name, uint16_t type, uint16_t cls) {
   DNSQuestion question = {0};
 
-  char encoded_name[DNS_QNAME_MAX_LEN];
+  uint8_t encoded_name[DNS_QNAME_MAX_LEN];
   size_t encoded_name_length = 0;
-  encode_name(&encoded_name[0], &encoded_name_length, name);
+  encode_name(&encoded_name[0], &encoded_name_length, (uint8_t *)name);
 
   question.name = calloc(1, encoded_name_length);
-  strncpy(question.name, encoded_name, encoded_name_length);
+  strncpy(question.name, (char *)encoded_name, encoded_name_length);
   question.type = htons(type);
   question.cls = htons(cls);
 
