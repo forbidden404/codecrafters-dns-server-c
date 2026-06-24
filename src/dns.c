@@ -67,6 +67,8 @@ DNSQuestion dns_question_new(char *name, uint16_t type, uint16_t cls) {
   size_t encoded_name_length = 0;
   encode_name(&encoded_name[0], &encoded_name_length, name);
 
+  question.name = calloc(1, encoded_name_length);
+  strncpy(question.name, encoded_name, encoded_name_length);
   question.type = htons(type);
   question.cls = htons(cls);
 
