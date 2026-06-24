@@ -67,9 +67,9 @@ int main() {
     struct flags f = {htons(1), 0, 0, 0, 0, 0, 0, htons(1)};
     DNSHeader header = dns_header_new(1234, f, 0, 0, 0, 0);
 
-    size_t message_length = sizeof(*header);
+    size_t message_length = 12;
     uint8_t *message = calloc(1, message_length);
-    memcpy(message, header, message_length);
+    memcpy(message, &header, message_length);
 
     // Send response
     if (sendto(udpSocket, message, message_length, 0,
