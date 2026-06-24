@@ -67,9 +67,14 @@ int main() {
     DNSHeader header = dns_header_new(1234, 0x8000, 1, 0, 0, 0);
     DNSQuestion question = dns_question_new("codecrafters.io", 1, 1);
 
-    DNSMessage message = {.header = header, .question = question};
+    size_t message_length =
+        sizeof(header) + strlen(question.name) + sizeof(question);
 
-    size_t message_length = sizeof(message);
+    uint8_t *message = calloc(1, message_length);
+    memcpy(message, &header, sizeof(header));
+    memcpy(message + sizeof(header), question.name, strlen(question.name));
+    memcpy(message + sizeof(header) + strlen(question.name), &question.type,
+           sizeof(question.type) + sizeof(question.cls));
 
     // Send response
     if (sendto(udpSocket, &message, message_length, 0,
