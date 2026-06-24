@@ -64,7 +64,7 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %zd bytes: %s\n", bytesRead, buffer);
 
-    DNSHeader header = dns_header_new(1234, 0x8000, 0, 0, 0, 0);
+    DNSHeader header = dns_header_new(1234, 0x8000, 1, 0, 0, 0);
     DNSQuestion question = dns_question_new("codecrafters.io", 1, 1);
 
     DNSMessage message = {.header = header, .question = question};
