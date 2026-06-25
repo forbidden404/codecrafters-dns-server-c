@@ -59,17 +59,39 @@ void encode_name(uint8_t *dst, size_t *dst_len, uint8_t *name) {
   }
 }
 
-DNSQuestion dns_question_new(char *name, uint16_t type, uint16_t cls) {
+DNSQuestion dns_question_new(uint16_t type, uint16_t cls) {
   DNSQuestion question = {0};
 
-  uint8_t encoded_name[DNS_QNAME_MAX_LEN];
-  size_t encoded_name_length = 0;
-  encode_name(&encoded_name[0], &encoded_name_length, (uint8_t *)name);
-
-  question.name = calloc(1, encoded_name_length + 1);
-  strncpy(question.name, (char *)encoded_name, encoded_name_length);
   question.type = htons(type);
   question.cls = htons(cls);
 
   return question;
+}
+
+DNSMessage dns_message_new(DNSHeader header, char *label,
+                           DNSQuestion question) {
+  DNSMessage message = {0};
+  message.header = header;
+  uint8_t encoded_name[DNS_QNAME_MAX_LEN];
+  size_t encoded_name_length = 0;
+  encode_name(&encoded_name[0], &encoded_name_length, (uint8_t *)label);
+
+  message.label = calloc(1, encoded_name_length + 1);
+  strncpy(message.label, (char *)encoded_name, encoded_name_length);
+  message.label_length = encoded_name_length;
+
+  message.question = question;
+
+  return message;
+}
+
+uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
+  *message_length =
+      sizeof(message.header) + message.label_length + sizeof(message.question);
+  uint8_t *msg = calloc(1, *message_length);
+  memcpy(msg, &message.header, sizeof(message.header));
+  memcpy(msg + sizeof(message.header), &message.label, message.label_length);
+  memcpy(msg + sizeof(message.header) + message.label_length, &message.question,
+         sizeof(message.question));
+  return msg;
 }

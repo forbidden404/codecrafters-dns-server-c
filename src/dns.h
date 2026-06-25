@@ -19,7 +19,6 @@ typedef struct dns_header {
 
 #pragma pack(push, 1)
 typedef struct dns_question {
-  char *name;
   uint16_t type;
   uint16_t cls;
 } DNSQuestion;
@@ -28,6 +27,8 @@ typedef struct dns_question {
 #pragma pack(push, 1)
 typedef struct dns_message {
   DNSHeader header;
+  char *label;
+  size_t label_length;
   DNSQuestion question;
 } DNSMessage;
 #pragma pack(pop)
@@ -37,6 +38,9 @@ DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
                          uint16_t arcount);
 DNSHeader dns_header_from_buffer(const char *buffer);
 
-DNSQuestion dns_question_new(char *name, uint16_t type, uint16_t cls);
+DNSQuestion dns_question_new(uint16_t type, uint16_t cls);
+
+DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question);
+uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
 
 #endif
