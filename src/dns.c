@@ -90,7 +90,7 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
       sizeof(message.header) + message.label_length + sizeof(message.question);
   uint8_t *msg = calloc(1, *message_length);
   memcpy(msg, &message.header, sizeof(message.header));
-  memcpy(msg + sizeof(message.header), &message.label, message.label_length);
+  memcpy(msg + sizeof(message.header), message.label, message.label_length);
   memcpy(msg + sizeof(message.header) + message.label_length, &message.question,
          sizeof(message.question));
   return msg;
