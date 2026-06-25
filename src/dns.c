@@ -29,7 +29,11 @@ DNSHeader dns_header_from_buffer(const char *buffer) {
     return header;
   }
 
-  memcpy(&header, buffer, sizeof(header));
+  int j = 0;
+  for (int i = length; i > 0; i = i - 2) {
+    memcpy(&header + j, &buffer[i], 2);
+    j += 2;
+  }
 
   return header;
 }
