@@ -100,7 +100,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
   encode_name(&encoded_answer[0], &encoded_answer_length,
               (uint8_t *)answer_label);
   message.answer_label = calloc(1, encoded_answer_length + 1);
-  strncpy(message.data, (char *)encoded_answer, encoded_answer_length);
+  strncpy(message.answer_label, (char *)encoded_answer, encoded_answer_length);
   message.answer_length = encoded_answer_length;
 
   message.answer = answer;
