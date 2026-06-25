@@ -72,7 +72,7 @@ int main() {
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
 
     // Send response
-    if (sendto(udpSocket, &msg, message_length, 0,
+    if (sendto(udpSocket, msg, message_length, 0,
                (struct sockaddr *)&clientAddress,
                sizeof(clientAddress)) == -1) {
       perror("Failed to send response");
