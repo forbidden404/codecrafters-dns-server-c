@@ -81,9 +81,14 @@ int main() {
            received_message.header.packet_identifier,
            received_message.header.flags);
 
-    DNSHeader header =
-        dns_header_new(received_message.header.packet_identifier,
-                       received_message.header.flags | 0x8000, 1, 1, 0, 0);
+    uint16_t response_flags = received_message.header.flags | 0x8000;
+    // if OPCODE != 0
+    if (received_message.header.flags & 0b0111100000000000) {
+      response_flags |= 0x0004;
+    }
+
+    DNSHeader header = dns_header_new(received_message.header.packet_identifier,
+                                      response_flags, 1, 1, 0, 0);
     DNSQuestion question = dns_question_new(1, 1);
     DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
     DNSMessage message = dns_message_new(header, "codecrafters.io", question,
