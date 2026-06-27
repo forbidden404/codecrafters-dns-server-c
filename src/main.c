@@ -66,19 +66,19 @@ int main() {
 
     DNSMessage received_message =
         dns_message_from_buffer((uint8_t *)buffer, bytesRead);
-    printf("received => id: %ud, flags: %ud\n",
+    printf("received => id: %u, flags: %u\n",
            received_message.header.packet_identifier,
            received_message.header.flags);
 
-    DNSHeader header =
-        dns_header_new(received_message.header.packet_identifier,
-                       received_message.header.flags | 0x8000, 1, 1, 0, 0);
+    DNSHeader header = dns_header_new(
+        received_message.header.packet_identifier,
+        received_message.header.flags | htons(0x8000), 1, 1, 0, 0);
     DNSQuestion question = dns_question_new(1, 1);
     DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
     DNSMessage message = dns_message_new(header, "codecrafters.io", question,
                                          "codecrafters.io", answer, "8.8.8.8");
 
-    printf("created => id: %ud, flags: %ud\n", header.packet_identifier,
+    printf("created => id: %u, flags: %u\n", header.packet_identifier,
            header.flags);
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
