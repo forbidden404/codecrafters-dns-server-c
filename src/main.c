@@ -64,7 +64,8 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %zd bytes: %s\n", bytesRead, buffer);
 
-    DNSMessage received_message = dns_message_from_buffer(buffer);
+    DNSMessage received_message =
+        dns_message_from_buffer((uint8_t *)buffer, bytesRead);
     printf("received => id: %ud, flags: %ud\n",
            received_message.header.packet_identifier,
            received_message.header.flags);

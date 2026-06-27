@@ -63,10 +63,9 @@ DNSHeader dns_header_from_buffer(uint8_t *buffer, size_t length, int *offset) {
   return header;
 }
 
-DNSMessage dns_message_from_buffer(const char *buffer) {
+DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
   int offset = 0;
-  DNSHeader header =
-      dns_header_from_buffer((uint8_t *)buffer, strlen(buffer), &offset);
+  DNSHeader header = dns_header_from_buffer((uint8_t *)buffer, length, &offset);
 
   DNSQuestion question;
   DNSAnswer answer;
