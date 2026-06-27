@@ -64,6 +64,35 @@ DNSHeader dns_header_from_buffer(uint8_t *buffer, size_t length, int *offset) {
   return header;
 }
 
+uint8_t dns_header_get_flag_shift(DNSFlagOption flag) {
+  switch (flag) {
+  case QR:
+    return 15;
+  case OPCODE:
+    return 11;
+  case AA:
+    return 10;
+  case TC:
+    return 9;
+  case RD:
+    return 8;
+  case RA:
+    return 7;
+  case Z:
+    return 4;
+  case RCODE:
+    return 0;
+  }
+}
+
+uint8_t dns_header_get_flag(DNSHeader header, DNSFlagOption flag) {
+  return (header.flags & flag) >> (dns_header_get_flag_shift(flag));
+}
+
+void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value) {
+  header.flags |= (flag & (value << dns_header_get_flag_shift(flag)));
+}
+
 DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
   int offset = 0;
   DNSHeader header = dns_header_from_buffer((uint8_t *)buffer, length, &offset);

@@ -47,9 +47,23 @@ typedef struct dns_message {
 } DNSMessage;
 #pragma pack(pop)
 
+typedef enum flags_option {
+  QR = 0b1000000000000000,
+  OPCODE = 0b0111100000000000,
+  AA = 0b0000010000000000,
+  TC = 0b0000001000000000,
+  RD = 0b0000000100000000,
+  RA = 0b0000000010000000,
+  Z = 0b0000000001110000,
+  RCODE = 0b0000000000001111,
+} DNSFlagOption;
+
 DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount);
+
+uint8_t dns_header_get_flag(DNSHeader header, DNSFlagOption flag);
+void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value);
 
 DNSQuestion dns_question_new(uint16_t type, uint16_t cls);
 DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,

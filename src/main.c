@@ -79,8 +79,8 @@ int main() {
 
     uint16_t response_flags = received_message.header.flags | 0x8000;
     // if OPCODE != 0
-    if (received_message.header.flags & 0b0111100000000000) {
-      response_flags |= 0x0004;
+    if (dns_header_get_flag(received_message.header, OPCODE) != 0) {
+      dns_header_set_flag(received_message.header, RCODE, 4);
     }
 
     DNSHeader header = dns_header_new(received_message.header.packet_identifier,
