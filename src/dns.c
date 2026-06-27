@@ -32,32 +32,32 @@ DNSHeader dns_header_from_buffer(uint8_t *buffer, size_t length, int *offset) {
 
   uint16_t packet_identifier = 0;
   memcpy(&packet_identifier, current, 2);
-  header.packet_identifier = packet_identifier;
+  header.packet_identifier = ntohs(packet_identifier);
   current += 2;
 
   uint16_t flags = 0;
   memcpy(&flags, current, 2);
-  header.flags = flags;
+  header.flags = ntohs(flags);
   current += 2;
 
   uint16_t qdcount = 0;
   memcpy(&qdcount, current, 2);
-  header.qdcount = qdcount;
+  header.qdcount = ntohs(qdcount);
   current += 2;
 
   uint16_t ancount = 0;
   memcpy(&ancount, current, 2);
-  header.ancount = ancount;
+  header.ancount = ntohs(ancount);
   current += 2;
 
   uint16_t nscount = 0;
   memcpy(&nscount, current, 2);
-  header.nscount = nscount;
+  header.nscount = ntohs(nscount);
   current += 2;
 
   uint16_t arcount = 0;
   memcpy(&arcount, current, 2);
-  header.arcount = arcount;
+  header.arcount = ntohs(arcount);
   current += 2;
 
   *offset = current - buffer;

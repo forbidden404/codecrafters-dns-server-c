@@ -72,7 +72,7 @@ int main() {
 
     DNSHeader header = dns_header_new(
         received_message.header.packet_identifier,
-        received_message.header.flags | htons(0x8000), 1, 1, 0, 0);
+        received_message.header.flags | ntohs(0x8000), 1, 1, 0, 0);
     DNSQuestion question = dns_question_new(1, 1);
     DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
     DNSMessage message = dns_message_new(header, "codecrafters.io", question,
