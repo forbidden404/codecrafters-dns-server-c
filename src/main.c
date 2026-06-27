@@ -64,13 +64,14 @@ int main() {
     buffer[bytesRead] = '\0';
     printf("Received %zd bytes: %s\n", bytesRead, buffer);
 
-    DNSHeader received_header = dns_header_from_buffer(buffer);
+    DNSMessage received_message = dns_message_from_buffer(buffer);
     printf("received => id: %ud, flags: %ud\n",
-           received_header.packet_identifier, received_header.flags);
+           received_message.header.packet_identifier,
+           received_message.header.flags);
 
     DNSHeader header =
-        dns_header_new(received_header.packet_identifier,
-                       received_header.flags | 0x8000, 1, 1, 0, 0);
+        dns_header_new(received_message.header.packet_identifier,
+                       received_message.header.flags | 0x8000, 1, 1, 0, 0);
     DNSQuestion question = dns_question_new(1, 1);
     DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
     DNSMessage message = dns_message_new(header, "codecrafters.io", question,

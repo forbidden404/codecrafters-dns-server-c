@@ -20,22 +20,60 @@ DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
   return header;
 }
 
-DNSHeader dns_header_from_buffer(const char *buffer) {
+DNSHeader dns_header_from_buffer(uint8_t *buffer, size_t length, int *offset) {
   DNSHeader header;
   memset(&header, 0, sizeof(header));
 
-  size_t length = strlen(buffer);
   if (length < 12) {
     return header;
   }
 
-  int j = 0;
-  for (int i = length; i > 0; i = i - 2) {
-    memcpy(&header + j, &buffer[i], 2);
-    j += 2;
-  }
+  uint8_t *current = buffer + *offset;
 
+  uint16_t packet_identifier = 0;
+  memcpy(&packet_identifier, current, 2);
+  header.packet_identifier = ntohs(packet_identifier);
+  *current += 2;
+
+  uint16_t flags = 0;
+  memcpy(&flags, current, 2);
+  header.flags = ntohs(flags);
+  *current += 2;
+
+  uint16_t qdcount = 0;
+  memcpy(&qdcount, current, 2);
+  header.qdcount = ntohs(qdcount);
+  *current += 2;
+
+  uint16_t ancount = 0;
+  memcpy(&ancount, current, 2);
+  header.ancount = ntohs(ancount);
+  *current += 2;
+
+  uint16_t nscount = 0;
+  memcpy(&nscount, current, 2);
+  header.nscount = ntohs(nscount);
+  *current += 2;
+
+  uint16_t arcount = 0;
+  memcpy(&arcount, current, 2);
+  header.arcount = ntohs(arcount);
+
+  *offset = current - buffer;
   return header;
+}
+
+DNSMessage dns_message_from_buffer(const char *buffer) {
+  int offset = 0;
+  DNSHeader header =
+      dns_header_from_buffer((uint8_t *)buffer, strlen(buffer), &offset);
+
+  DNSQuestion question;
+  DNSAnswer answer;
+
+  DNSMessage message = dns_message_new(header, "", question, "", answer, "");
+
+  return message;
 }
 
 void encode_name(uint8_t *dst, size_t *dst_len, uint8_t *name) {

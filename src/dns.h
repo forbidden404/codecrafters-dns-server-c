@@ -50,7 +50,6 @@ typedef struct dns_message {
 DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount);
-DNSHeader dns_header_from_buffer(const char *buffer);
 
 DNSQuestion dns_question_new(uint16_t type, uint16_t cls);
 DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
@@ -59,5 +58,7 @@ DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
 DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
                            char *answer_label, DNSAnswer answer, char *data);
 uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
+
+DNSMessage dns_message_from_buffer(const char *buffer);
 
 #endif
