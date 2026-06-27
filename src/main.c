@@ -10,6 +10,16 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+void print_bytes(uint8_t *buffer, size_t length) {
+  int i;
+  for (i = 0; i < length; i++) {
+    if (i > 0)
+      printf(" ");
+    printf("%02X", buffer[i]);
+  }
+  printf("\n");
+}
+
 int main() {
   // Disable output buffering
   setbuf(stdout, NULL);
@@ -63,6 +73,7 @@ int main() {
 
     buffer[bytesRead] = '\0';
     printf("Received %zd bytes: %s\n", bytesRead, buffer);
+    print_bytes((uint8_t *)buffer, bytesRead);
 
     DNSMessage received_message =
         dns_message_from_buffer((uint8_t *)buffer, bytesRead);
@@ -82,6 +93,7 @@ int main() {
            header.flags);
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
+    print_bytes((uint8_t *)msg, message_length);
 
     // Send response
     if (sendto(udpSocket, msg, message_length, 0,
