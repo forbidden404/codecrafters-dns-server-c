@@ -72,14 +72,10 @@ int main() {
     }
 
     buffer[bytesRead] = '\0';
-    printf("Received %zd bytes: %s\n", bytesRead, buffer);
     print_bytes((uint8_t *)buffer, bytesRead);
 
     DNSMessage received_message =
         dns_message_from_buffer((uint8_t *)buffer, bytesRead);
-    printf("received => id: %u, flags: %u\n",
-           received_message.header.packet_identifier,
-           received_message.header.flags);
 
     uint16_t response_flags = received_message.header.flags | 0x8000;
     // if OPCODE != 0
@@ -94,8 +90,6 @@ int main() {
     DNSMessage message = dns_message_new(header, "codecrafters.io", question,
                                          "codecrafters.io", answer, "8.8.8.8");
 
-    printf("created => id: %u, flags: %u\n", header.packet_identifier,
-           header.flags);
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
     print_bytes((uint8_t *)msg, message_length);
