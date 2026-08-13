@@ -106,13 +106,15 @@ uint8_t *decode_name(uint8_t *src, int *dst_length) {
     if (current != src) {
       name[*dst_length] = '.';
       *dst_length += 1;
-      current++;
     }
 
+    current++;
+
     // copy size bytes to str
+    uint8_t *end = name + *dst_length;
     *dst_length += size;
-    name = realloc(name, *dst_length);
-    memcpy(name, current, size);
+    name = realloc(name, (*dst_length) + 1);
+    memcpy(end, current, size);
 
     current += size;
   }
@@ -180,17 +182,20 @@ DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
 
   int question_name_len = 0;
   uint8_t *question_name = decode_name(buffer + offset, &question_name_len);
+  offset += question_name_len;
 
   DNSQuestion question =
       dns_question_from_buffer((uint8_t *)buffer, length, &offset);
 
   int answer_name_len = 0;
   uint8_t *answer_name = decode_name(buffer + offset, &answer_name_len);
+  offset += answer_name_len;
 
   DNSAnswer answer = dns_answer_from_buffer((uint8_t *)buffer, length, &offset);
 
   int data_name_len = 0;
   uint8_t *data_name = decode_name(buffer + offset, &data_name_len);
+  offset += data_name_len;
 
   DNSMessage message =
       dns_message_new(header, (char *)question_name, question,
