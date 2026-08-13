@@ -93,14 +93,108 @@ void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value) {
   header.flags |= (flag & (value << dns_header_get_flag_shift(flag)));
 }
 
+uint8_t *decode_name(uint8_t *src, int *dst_length) {
+  *dst_length = 0;
+  uint8_t *current = src;
+
+  uint8_t *name = calloc(1, sizeof(uint8_t));
+
+  while (*current != 0 && *dst_length < DNS_QNAME_MAX_LEN) {
+    uint8_t size = *current;
+
+    // add '.'
+    if (current != src) {
+      name[*dst_length] = '.';
+      *dst_length += 1;
+      current++;
+    }
+
+    // copy size bytes to str
+    *dst_length += size;
+    name = realloc(name, *dst_length);
+    memcpy(name, current, size);
+
+    current += size;
+  }
+
+  name[*dst_length] = 0;
+  return name;
+}
+
+DNSQuestion dns_question_from_buffer(uint8_t *buffer, size_t length,
+                                     int *offset) {
+  DNSQuestion question;
+  memset(&question, 0, sizeof(question));
+
+  uint8_t *current = buffer + *offset;
+
+  uint16_t type = 0;
+  memcpy(&type, current, 2);
+  question.type = ntohs(type);
+  current += 2;
+
+  uint16_t cls = 0;
+  memcpy(&cls, current, 2);
+  question.cls = ntohs(cls);
+  current += 2;
+
+  *offset = current - buffer;
+
+  return question;
+}
+
+DNSAnswer dns_answer_from_buffer(uint8_t *buffer, size_t length, int *offset) {
+  DNSAnswer answer;
+  memset(&answer, 0, sizeof(answer));
+
+  uint8_t *current = buffer + *offset;
+
+  uint16_t type = 0;
+  memcpy(&type, current, 2);
+  answer.type = ntohs(type);
+  current += 2;
+
+  uint16_t cls = 0;
+  memcpy(&cls, current, 2);
+  answer.cls = ntohs(cls);
+  current += 2;
+
+  uint32_t ttl = 0;
+  memcpy(&ttl, current, 4);
+  answer.ttl = ntohs(ttl);
+  current += 4;
+
+  uint16_t len = 0;
+  memcpy(&len, current, 2);
+  answer.length = ntohs(len);
+  current += 2;
+
+  *offset = current - buffer;
+
+  return answer;
+}
+
 DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
   int offset = 0;
   DNSHeader header = dns_header_from_buffer((uint8_t *)buffer, length, &offset);
 
-  DNSQuestion question;
-  DNSAnswer answer;
+  int question_name_len = 0;
+  uint8_t *question_name = decode_name(buffer + offset, &question_name_len);
 
-  DNSMessage message = dns_message_new(header, "", question, "", answer, "");
+  DNSQuestion question =
+      dns_question_from_buffer((uint8_t *)buffer, length, &offset);
+
+  int answer_name_len = 0;
+  uint8_t *answer_name = decode_name(buffer + offset, &answer_name_len);
+
+  DNSAnswer answer = dns_answer_from_buffer((uint8_t *)buffer, length, &offset);
+
+  int data_name_len = 0;
+  uint8_t *data_name = decode_name(buffer + offset, &data_name_len);
+
+  DNSMessage message =
+      dns_message_new(header, (char *)question_name, question,
+                      (char *)answer_name, answer, (char *)data_name);
 
   return message;
 }
