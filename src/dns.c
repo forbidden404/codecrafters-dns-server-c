@@ -269,12 +269,9 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
   size_t encoded_answer_length = 0;
   encode_name(&encoded_answer[0], &encoded_answer_length,
               (uint8_t *)answer_label);
-
-  int decoded_answer_length = 0;
-  uint8_t *decoded_answer = decode_name(encoded_answer, &decoded_answer_length);
-  message.answer_label = calloc(1, decoded_answer_length + 1);
-  strncpy(message.answer_label, (char *)decoded_answer, decoded_answer_length);
-  message.answer_length = decoded_answer_length;
+  message.answer_label = calloc(1, encoded_answer_length + 1);
+  strncpy(message.answer_label, (char *)encoded_answer, encoded_answer_length);
+  message.answer_length = encoded_answer_length;
 
   message.answer = answer;
 
