@@ -272,7 +272,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   int decoded_answer_length = 0;
   uint8_t *decoded_answer = decode_name(encoded_answer, &decoded_answer_length);
-  message.answer_label = calloc(1, encoded_answer_length + 1);
+  message.answer_label = calloc(1, decoded_answer_length + 1);
   strncpy(message.answer_label, (char *)decoded_answer, decoded_answer_length);
   message.answer_length = decoded_answer_length;
 
