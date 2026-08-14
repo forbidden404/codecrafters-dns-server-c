@@ -193,13 +193,10 @@ DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
 
   DNSAnswer answer = dns_answer_from_buffer((uint8_t *)buffer, length, &offset);
 
-  int data_name_len = 0;
-  uint8_t *data_name = decode_name(buffer + offset, &data_name_len);
-  offset += data_name_len + 1;
+  uint32_t data = *(buffer + offset);
 
-  DNSMessage message =
-      dns_message_new(header, (char *)question_name, question,
-                      (char *)answer_name, answer, (char *)data_name);
+  DNSMessage message = dns_message_new(header, (char *)question_name, question,
+                                       (char *)answer_name, answer, data);
 
   return message;
 }
@@ -251,7 +248,8 @@ DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
 }
 
 DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
-                           char *answer_label, DNSAnswer answer, char *data) {
+                           char *answer_label, DNSAnswer answer,
+                           uint32_t data) {
   DNSMessage message = {0};
   message.header = header;
 
@@ -273,12 +271,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.answer = answer;
 
-  uint8_t encoded_data[DNS_QNAME_MAX_LEN];
-  size_t encoded_data_length = 0;
-  encode_name(&encoded_data[0], &encoded_data_length, (uint8_t *)data);
-  message.data = calloc(1, encoded_data_length + 1);
-  strncpy(message.data, (char *)encoded_data, encoded_data_length);
-  message.data_length = encoded_data_length;
+  message.data = data;
 
   return message;
 }
@@ -286,7 +279,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
   *message_length = sizeof(message.header) + message.label_length +
                     sizeof(message.question) + message.answer_length +
-                    sizeof(message.answer) + message.data_length;
+                    sizeof(message.answer) + 4;
   uint8_t *msg = calloc(1, *message_length);
   memcpy(msg, &message.header, sizeof(message.header));
   memcpy(msg + sizeof(message.header), message.label, message.label_length);
@@ -301,6 +294,6 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
   memcpy(msg + sizeof(message.header) + message.label_length +
              sizeof(message.question) + message.answer_length +
              sizeof(message.answer),
-         message.data, message.data_length);
+         &message.data, 4);
   return msg;
 }

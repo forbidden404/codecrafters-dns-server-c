@@ -42,8 +42,7 @@ typedef struct dns_message {
   char *answer_label;
   size_t answer_length;
   DNSAnswer answer;
-  char *data;
-  size_t data_length;
+  uint32_t data;
 } DNSMessage;
 #pragma pack(pop)
 
@@ -70,7 +69,7 @@ DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
                          uint16_t length);
 
 DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
-                           char *answer_label, DNSAnswer answer, char *data);
+                           char *answer_label, DNSAnswer answer, uint32_t data);
 uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
 
 DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length);

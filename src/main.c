@@ -87,9 +87,11 @@ int main() {
                                       response_flags, 1, 1, 0, 0);
     DNSQuestion question = dns_question_new(1, 1);
     DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
+    uint32_t data = ((uint32_t)8 << 24) | ((uint32_t)8 << 16) |
+                    ((uint32_t)8 << 8) | (uint32_t)8;
     DNSMessage message =
         dns_message_new(header, received_message.label, question,
-                        received_message.label, answer, "8.8.8.8");
+                        received_message.label, answer, data);
 
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
