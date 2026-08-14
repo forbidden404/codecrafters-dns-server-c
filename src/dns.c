@@ -265,13 +265,11 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.question = question;
 
-  uint8_t encoded_answer[DNS_QNAME_MAX_LEN];
-  size_t encoded_answer_length = 0;
-  encode_name(&encoded_answer[0], &encoded_answer_length,
-              (uint8_t *)answer_label);
-  message.answer_label = calloc(1, encoded_answer_length + 1);
-  strncpy(message.answer_label, (char *)encoded_answer, encoded_answer_length);
-  message.answer_length = encoded_answer_length;
+  size_t answer_length = strlen(answer_label);
+
+  message.answer_label = calloc(1, answer_length + 1);
+  strncpy(message.answer_label, answer_label, answer_length);
+  message.answer_length = answer_length;
 
   message.answer = answer;
 
