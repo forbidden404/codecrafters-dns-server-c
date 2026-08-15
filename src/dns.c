@@ -94,6 +94,10 @@ void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value) {
 }
 
 uint8_t *decode_name(uint8_t *src, int *dst_length) {
+  if (src == NULL) {
+    return NULL;
+  }
+
   *dst_length = 0;
   uint8_t *current = src;
 
@@ -113,7 +117,7 @@ uint8_t *decode_name(uint8_t *src, int *dst_length) {
     // copy size bytes to str
     uint8_t *end = name + *dst_length;
     *dst_length += size;
-    name = realloc(name, (*dst_length) + 1);
+    name = realloc(name, *dst_length);
     memcpy(end, current, size);
 
     current += size;
@@ -271,7 +275,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.answer = answer;
 
-  message.data = data;
+  message.data = htons(data);
 
   return message;
 }
