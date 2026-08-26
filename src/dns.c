@@ -303,10 +303,11 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
   return msg;
 }
 
-#define print_with_tagline(t_, f_, ...) printf("[%s]: " f_, t_, ##__VA_ARGS__)
+#define print_with_tagline(t_, f_, ...)                                        \
+  printf("[%s]: " f_ "\n", t_, ##__VA_ARGS__)
 
 void dns_header_debug_string(DNSHeader header, char *tag) {
-  print_with_tagline(tag, "\tHeader\n");
+  print_with_tagline(tag, "\tHeader");
 
   print_with_tagline(tag, "\t\tpacket_identifier: %u",
                      header.packet_identifier);
@@ -318,34 +319,34 @@ void dns_header_debug_string(DNSHeader header, char *tag) {
 }
 
 void dns_question_debug_string(DNSQuestion question, char *tag) {
-  print_with_tagline(tag, "\tQuestion\n");
+  print_with_tagline(tag, "\tQuestion");
 
-  print_with_tagline(tag, "\t\ttype: %u\n", question.type);
-  print_with_tagline(tag, "\t\tcls: %u\n", question.cls);
+  print_with_tagline(tag, "\t\ttype: %u", question.type);
+  print_with_tagline(tag, "\t\tcls: %u", question.cls);
 }
 
 void dns_answer_debug_string(DNSAnswer answer, char *tag) {
-  print_with_tagline(tag, "\tAnswer\n");
+  print_with_tagline(tag, "\tAnswer");
 
-  print_with_tagline(tag, "\t\ttype: %u\n", answer.type);
-  print_with_tagline(tag, "\t\tcls: %u\n", answer.cls);
-  print_with_tagline(tag, "\t\tttl: %u\n", answer.ttl);
-  print_with_tagline(tag, "\t\tlength: %u\n", answer.length);
+  print_with_tagline(tag, "\t\ttype: %u", answer.type);
+  print_with_tagline(tag, "\t\tcls: %u", answer.cls);
+  print_with_tagline(tag, "\t\tttl: %u", answer.ttl);
+  print_with_tagline(tag, "\t\tlength: %u", answer.length);
 }
 
 void dns_message_debug_string(DNSMessage message, char *tag) {
   dns_header_debug_string(message.header, tag);
 
-  print_with_tagline(tag, "\t\tlabel: %s\n", message.label);
-  print_with_tagline(tag, "\t\tlabel_length: %lu\n", message.label_length);
+  print_with_tagline(tag, "\t\tlabel: %s", message.label);
+  print_with_tagline(tag, "\t\tlabel_length: %lu", message.label_length);
 
   dns_question_debug_string(message.question, tag);
 
   dns_answer_debug_string(message.answer, tag);
 
-  print_with_tagline(tag, "\t\tanswer: %s\n", message.answer_label);
-  print_with_tagline(tag, "\t\tanswer_length: %lu\n", message.answer_length);
+  print_with_tagline(tag, "\t\tanswer: %s", message.answer_label);
+  print_with_tagline(tag, "\t\tanswer_length: %lu", message.answer_length);
 
-  print_with_tagline(tag, "\tData\n");
-  print_with_tagline(tag, "\tdata: %u\n", message.data);
+  print_with_tagline(tag, "\tData");
+  print_with_tagline(tag, "\tdata: %u", message.data);
 }
