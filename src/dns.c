@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -300,4 +301,49 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
              sizeof(message.answer),
          &message.data, 4);
   return msg;
+}
+
+void dns_header_debug_string(DNSHeader header) {
+  printf("\tHeader\n");
+
+  printf("\tpacket_identifier: %u\n", header.packet_identifier);
+  printf("\tflags: %u\n", header.flags);
+  printf("\tqdcount: %u\n", header.qdcount);
+  printf("\tancount: %u\n", header.ancount);
+  printf("\tnscount: %u\n", header.nscount);
+  printf("\tarcount: %u\n", header.arcount);
+}
+
+void dns_question_debug_string(DNSQuestion question) {
+  printf("\tQuestion\n");
+
+  printf("\ttype: %u\n", question.type);
+  printf("\tcls: %u\n", question.cls);
+}
+
+void dns_answer_debug_string(DNSAnswer answer) {
+  printf("\tAnswer\n");
+
+  printf("\ttype: %u\n", answer.type);
+  printf("\tcls: %u\n", answer.cls);
+  printf("\tttl: %u\n", answer.ttl);
+  printf("\tlength: %u\n", answer.length);
+}
+
+void dns_message_debug_string(DNSMessage message) {
+  printf("DNSMessage\n");
+
+  dns_header_debug_string(message.header);
+
+  printf("\tlabel: %s\n", message.label);
+  printf("\tlabel length: %lu\n", message.label_length);
+
+  dns_question_debug_string(message.question);
+
+  dns_answer_debug_string(message.answer);
+  printf("\tanswer: %s\n", message.answer_label);
+  printf("\tanswer length: %lu\n", message.answer_length);
+
+  printf("\tData\n");
+  printf("\tdata: %u\n", message.data);
 }
