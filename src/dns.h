@@ -74,6 +74,6 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
 
 DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length);
 
-void dns_message_debug_string(DNSMessage message);
+void dns_message_debug_string(DNSMessage message, char *tag);
 
 #endif

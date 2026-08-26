@@ -72,13 +72,11 @@ int main() {
     }
 
     buffer[bytesRead] = '\0';
-    print_bytes((uint8_t *)buffer, bytesRead);
 
     DNSMessage received_message =
         dns_message_from_buffer((uint8_t *)buffer, bytesRead);
 
-    printf("Received message:\n");
-    dns_message_debug_string(received_message);
+    dns_message_debug_string(received_message, "received_message");
 
     uint16_t response_flags = received_message.header.flags | 0x8000;
     // if OPCODE != 0
@@ -96,12 +94,10 @@ int main() {
         dns_message_new(header, received_message.label, question,
                         received_message.label, answer, data);
 
-    printf("Sent message:\n");
-    dns_message_debug_string(message);
+    dns_message_debug_string(message, "sent_message");
 
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
-    print_bytes((uint8_t *)msg, message_length);
 
     // Send response
     if (sendto(udpSocket, msg, message_length, 0,
