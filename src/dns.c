@@ -274,7 +274,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.answer = answer;
 
-  message.data = data;
+  message.data = htonl(data);
 
   return message;
 }
@@ -363,5 +363,5 @@ void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
                      parse32(message.answer_length));
 
   print_with_tagline(tag, "\tData");
-  print_with_tagline(tag, "\tdata: %lu", message.data);
+  print_with_tagline(tag, "\tdata: %lu", parse32(message.data));
 }
