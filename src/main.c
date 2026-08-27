@@ -91,12 +91,11 @@ int main() {
     uint32_t data = ((uint32_t)8 << 24) | ((uint32_t)8 << 16) |
                     ((uint32_t)8 << 8) | (uint32_t)8;
 
-    printf("data: %u\n", data);
     DNSMessage message =
         dns_message_new(header, received_message.label, question,
                         received_message.label, answer, data);
 
-    dns_message_debug_string(message, "sent_message", 1);
+    // dns_message_debug_string(message, "sent_message", 1);
 
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
