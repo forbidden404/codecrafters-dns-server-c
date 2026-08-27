@@ -1,7 +1,6 @@
 #include "dns.h"
 
 #include <arpa/inet.h>
-#include <netinet/in.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
