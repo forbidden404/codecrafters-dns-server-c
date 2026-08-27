@@ -340,8 +340,8 @@ void dns_answer_debug_string(DNSAnswer answer, char *tag, int sending) {
 
   print_with_tagline(tag, "\t\ttype: %u", parse16(answer.type));
   print_with_tagline(tag, "\t\tcls: %u", parse16(answer.cls));
-  print_with_tagline(tag, "\t\tttl: %u", parse32(answer.ttl));
-  print_with_tagline(tag, "\t\tlength: %u", parse32(answer.length));
+  print_with_tagline(tag, "\t\tttl: %lu", parse32(answer.ttl));
+  print_with_tagline(tag, "\t\tlength: %u", parse16(answer.length));
 }
 
 void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
