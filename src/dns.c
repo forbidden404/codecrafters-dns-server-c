@@ -222,7 +222,7 @@ void encode_name(uint8_t *dst, size_t *dst_len, uint8_t *name) {
 
       if (*current == 0) {
         *dst = 0;
-        *dst_len = dst - begin;
+        *dst_len = dst - begin + 1;
         break;
       }
     }
@@ -258,13 +258,11 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
   DNSMessage message = {0};
   message.header = header;
 
-  uint8_t encoded_name[DNS_QNAME_MAX_LEN];
-  size_t encoded_name_length = 0;
-  encode_name(&encoded_name[0], &encoded_name_length, (uint8_t *)label);
+  size_t name_length = strlen(label);
 
-  message.label = calloc(1, encoded_name_length + 1);
-  strncpy(message.label, (char *)encoded_name, encoded_name_length);
-  message.label_length = encoded_name_length;
+  message.label = calloc(1, name_length + 1);
+  strncpy(message.label, label, name_length);
+  message.label_length = name_length;
 
   message.question = question;
 
