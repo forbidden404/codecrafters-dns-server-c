@@ -1,6 +1,7 @@
 #include "dns.h"
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -352,7 +353,7 @@ void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
 
   print_with_tagline(tag, "\t\tlabel: %s", message.label);
   print_with_tagline(tag, "\t\tlabel_length: %lu",
-                     parse16(message.label_length));
+                     parse32(message.label_length));
 
   dns_question_debug_string(message.question, tag, sending);
 
@@ -360,7 +361,7 @@ void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
 
   print_with_tagline(tag, "\t\tanswer: %s", message.answer_label);
   print_with_tagline(tag, "\t\tanswer_length: %lu",
-                     parse16(message.answer_length));
+                     parse32(message.answer_length));
 
   print_with_tagline(tag, "\tData");
   print_with_tagline(tag, "\tdata: %lu", parse32(message.data));
