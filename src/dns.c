@@ -222,7 +222,7 @@ void encode_name(uint8_t *dst, size_t *dst_len, uint8_t *name) {
 
       if (*current == 0) {
         *dst = 0;
-        *dst_len = dst - begin + 1;
+        *dst_len = dst - begin;
         break;
       }
     }
