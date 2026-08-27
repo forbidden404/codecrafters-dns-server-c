@@ -76,7 +76,7 @@ int main() {
     DNSMessage received_message =
         dns_message_from_buffer((uint8_t *)buffer, bytesRead);
 
-    dns_message_debug_string(received_message, "received_message", 0);
+    // dns_message_debug_string(received_message, "received_message", 0);
 
     uint16_t response_flags = received_message.header.flags | 0x8000;
     // if OPCODE != 0
