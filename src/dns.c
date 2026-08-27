@@ -363,5 +363,5 @@ void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
                      parse16(message.answer_length));
 
   print_with_tagline(tag, "\tData");
-  print_with_tagline(tag, "\tdata: %u", parse32(message.data));
+  print_with_tagline(tag, "\tdata: %lu", parse32(message.data));
 }
