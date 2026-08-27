@@ -90,6 +90,8 @@ int main() {
     DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
     uint32_t data = ((uint32_t)8 << 24) | ((uint32_t)8 << 16) |
                     ((uint32_t)8 << 8) | (uint32_t)8;
+
+    printf("data: %u\n", data);
     DNSMessage message =
         dns_message_new(header, received_message.label, question,
                         received_message.label, answer, data);
