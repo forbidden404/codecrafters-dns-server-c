@@ -1,0 +1,127 @@
+Logs from your program will appear here!
+[received_message]: 	Header
+[received_message]: 		packet_identifier: 20819
+[received_message]: 		flags: 8193
+[received_message]: 		qdcount: 256
+[received_message]: 		ancount: 0
+[received_message]: 		nscount: 0
+[received_message]: 		arcount: 256
+[received_message]: 		label: 
+[received_message]: 		label_length: 0
+[received_message]: 	Question
+[received_message]: 		type: 1
+[received_message]: 		cls: 1
+[received_message]: 	Answer
+[received_message]: 		type: 10496
+[received_message]: 		cls: 16
+[received_message]: 		ttl: 0
+[received_message]: 		length: 0
+[received_message]: 		answer: 
+[received_message]: 		answer_length: 0
+[received_message]: 	Data
+[received_message]: 	data: 0
+[sent_message]: 	Header
+[sent_message]: 		packet_identifier: 21329
+[sent_message]: 		flags: 33056
+[sent_message]: 		qdcount: 1
+[sent_message]: 		ancount: 1
+[sent_message]: 		nscount: 0
+[sent_message]: 		arcount: 0
+[sent_message]: 		label: 
+[sent_message]: 		label_length: 0
+[sent_message]: 	Question
+[sent_message]: 		type: 1
+[sent_message]: 		cls: 1
+[sent_message]: 	Answer
+[sent_message]: 		type: 1
+[sent_message]: 		cls: 1
+[sent_message]: 		ttl: 60
+[sent_message]: 		length: 4
+[sent_message]: 		answer: 
+[sent_message]: 		answer_length: 0
+[sent_message]: 	Data
+[sent_message]: 	data: 134744072
+[received_message]: 	Header
+[received_message]: 		packet_identifier: 20819
+[received_message]: 		flags: 8193
+[received_message]: 		qdcount: 256
+[received_message]: 		ancount: 0
+[received_message]: 		nscount: 0
+[received_message]: 		arcount: 256
+[received_message]: 		label: 
+[received_message]: 		label_length: 0
+[received_message]: 	Question
+[received_message]: 		type: 1
+[received_message]: 		cls: 1
+[received_message]: 	Answer
+[received_message]: 		type: 10496
+[received_message]: 		cls: 16
+[received_message]: 		ttl: 0
+[received_message]: 		length: 0
+[received_message]: 		answer: 
+[received_message]: 		answer_length: 0
+[received_message]: 	Data
+[received_message]: 	data: 0
+[sent_message]: 	Header
+[sent_message]: 		packet_identifier: 21329
+[sent_message]: 		flags: 33056
+[sent_message]: 		qdcount: 1
+[sent_message]: 		ancount: 1
+[sent_message]: 		nscount: 0
+[sent_message]: 		arcount: 0
+[sent_message]: 		label: 
+[sent_message]: 		label_length: 0
+[sent_message]: 	Question
+[sent_message]: 		type: 1
+[sent_message]: 		cls: 1
+[sent_message]: 	Answer
+[sent_message]: 		type: 1
+[sent_message]: 		cls: 1
+[sent_message]: 		ttl: 60
+[sent_message]: 		length: 4
+[sent_message]: 		answer: 
+[sent_message]: 		answer_length: 0
+[sent_message]: 	Data
+[sent_message]: 	data: 134744072
+[received_message]: 	Header
+[received_message]: 		packet_identifier: 20819
+[received_message]: 		flags: 8193
+[received_message]: 		qdcount: 256
+[received_message]: 		ancount: 0
+[received_message]: 		nscount: 0
+[received_message]: 		arcount: 256
+[received_message]: 		label: 
+[received_message]: 		label_length: 0
+[received_message]: 	Question
+[received_message]: 		type: 1
+[received_message]: 		cls: 1
+[received_message]: 	Answer
+[received_message]: 		type: 10496
+[received_message]: 		cls: 16
+[received_message]: 		ttl: 0
+[received_message]: 		length: 0
+[received_message]: 		answer: 
+[received_message]: 		answer_length: 0
+[received_message]: 	Data
+[received_message]: 	data: 0
+[sent_message]: 	Header
+[sent_message]: 		packet_identifier: 21329
+[sent_message]: 		flags: 33056
+[sent_message]: 		qdcount: 1
+[sent_message]: 		ancount: 1
+[sent_message]: 		nscount: 0
+[sent_message]: 		arcount: 0
+[sent_message]: 		label: 
+[sent_message]: 		label_length: 0
+[sent_message]: 	Question
+[sent_message]: 		type: 1
+[sent_message]: 		cls: 1
+[sent_message]: 	Answer
+[sent_message]: 		type: 1
+[sent_message]: 		cls: 1
+[sent_message]: 		ttl: 60
+[sent_message]: 		length: 4
+[sent_message]: 		answer: 
+[sent_message]: 		answer_length: 0
+[sent_message]: 	Data
+[sent_message]: 	data: 134744072

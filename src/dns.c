@@ -274,7 +274,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.answer = answer;
 
-  message.data = htonl(data);
+  message.data = data;
 
   return message;
 }
