@@ -76,7 +76,7 @@ int main() {
     DNSMessage received_message =
         dns_message_from_buffer((uint8_t *)buffer, bytesRead);
 
-    // dns_message_debug_string(received_message, "received_message", 0);
+    dns_message_debug_string(received_message, "received_message", 0);
 
     uint16_t response_flags = received_message.header.flags | 0x8000;
     // if OPCODE != 0
@@ -95,7 +95,7 @@ int main() {
         dns_message_new(header, received_message.label, question,
                         received_message.label, answer, data);
 
-    // dns_message_debug_string(message, "sent_message", 1);
+    dns_message_debug_string(message, "sent_message", 1);
 
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
