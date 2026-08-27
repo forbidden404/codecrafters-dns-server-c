@@ -1,1 +1,0 @@
-/usr/bin/cc -g -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names "CMakeFiles/dns-server.dir/src/dns.c.o" "CMakeFiles/dns-server.dir/src/main.c.o" -o dns-server
