@@ -94,37 +94,61 @@ void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value) {
   header.flags |= (flag & (value << dns_header_get_flag_shift(flag)));
 }
 
-uint8_t *decode_name(uint8_t *src, int *dst_length) {
+uint8_t *decode_name(uint8_t *src, int *dst_length, int *consumed_length) {
   if (src == NULL) {
     return NULL;
   }
 
   *dst_length = 0;
-  uint8_t *current = src;
+  *consumed_length = 0;
 
-  uint8_t *name = calloc(1, sizeof(uint8_t));
+  uint8_t *current = src;
+  uint8_t *name = calloc(1, 1);
+
+  if (name == NULL) {
+    return NULL;
+  }
 
   while (*current != 0 && *dst_length < DNS_QNAME_MAX_LEN) {
     uint8_t size = *current;
 
-    // add '.'
-    if (current != src) {
+    current++;
+    *consumed_length += 1;
+
+    if (*dst_length > 0) {
+      uint8_t *tmp = realloc(name, *dst_length + 2);
+
+      if (tmp == NULL) {
+        free(name);
+        return NULL;
+      }
+
+      name = tmp;
       name[*dst_length] = '.';
       *dst_length += 1;
     }
 
-    current++;
+    uint8_t *tmp = realloc(name, *dst_length + size + 1);
 
-    // copy size bytes to str
-    uint8_t *end = name + *dst_length;
+    if (tmp == NULL) {
+      free(name);
+      return NULL;
+    }
+
+    name = tmp;
+
+    memcpy(name + *dst_length, current, size);
     *dst_length += size;
-    name = realloc(name, *dst_length);
-    memcpy(end, current, size);
 
     current += size;
+    *consumed_length += size;
   }
 
-  name[*dst_length] = 0;
+  if (*current == 0) {
+    *consumed_length += 1;
+    name[*dst_length] = '\0';
+  }
+
   return name;
 }
 
@@ -186,15 +210,23 @@ DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
   DNSHeader header = dns_header_from_buffer((uint8_t *)buffer, length, &offset);
 
   int question_name_len = 0;
-  uint8_t *question_name = decode_name(buffer + offset, &question_name_len);
-  offset += question_name_len + 1;
+  int question_name_consumed = 0;
+
+  uint8_t *question_name =
+      decode_name(buffer + offset, &question_name_len, &question_name_consumed);
+
+  offset += question_name_consumed;
 
   DNSQuestion question =
       dns_question_from_buffer((uint8_t *)buffer, length, &offset);
 
   int answer_name_len = 0;
-  uint8_t *answer_name = decode_name(buffer + offset, &answer_name_len);
-  offset += answer_name_len + 1;
+  int answer_name_consumed = 0;
+
+  uint8_t *answer_name =
+      decode_name(buffer + offset, &answer_name_len, &answer_name_consumed);
+
+  offset += answer_name_consumed;
 
   DNSAnswer answer = dns_answer_from_buffer((uint8_t *)buffer, length, &offset);
 
@@ -262,42 +294,63 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.label = calloc(1, name_length + 1);
   strncpy(message.label, label, name_length);
-  message.label_length = htonl(name_length);
+  message.label_length = name_length;
 
   message.question = question;
 
   size_t answer_length = strlen(answer_label);
 
-  message.answer_label = calloc(1, answer_length + 1);
-  strncpy(message.answer_label, answer_label, answer_length);
-  message.answer_length = htonl(answer_length);
+  if (answer_length > 0) {
+    message.answer_label = calloc(answer_length + 1, 1);
+    strncpy(message.answer_label, answer_label, answer_length);
+  }
+  message.answer_length = answer_length;
 
   message.answer = answer;
 
-  message.data = data;
+  message.data = htonl(data);
 
   return message;
 }
 
 uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
-  *message_length = sizeof(message.header) + message.label_length +
-                    sizeof(message.question) + message.answer_length +
+  size_t encoded_label_length = 0;
+  size_t encoded_answer_label_length = 0;
+
+  uint8_t encoded_label[DNS_QNAME_MAX_LEN + 2];
+  uint8_t encoded_answer_label[DNS_QNAME_MAX_LEN + 2];
+
+  encode_name(encoded_label, &encoded_label_length, (uint8_t *)message.label);
+
+  encode_name(encoded_answer_label, &encoded_answer_label_length,
+              (uint8_t *)message.answer_label);
+
+  *message_length = sizeof(message.header) + encoded_label_length +
+                    sizeof(message.question) + encoded_answer_label_length +
                     sizeof(message.answer) + 4;
+
   uint8_t *msg = calloc(1, *message_length);
+
   memcpy(msg, &message.header, sizeof(message.header));
-  memcpy(msg + sizeof(message.header), message.label, message.label_length);
-  memcpy(msg + sizeof(message.header) + message.label_length, &message.question,
+
+  memcpy(msg + sizeof(message.header), encoded_label, encoded_label_length);
+
+  memcpy(msg + sizeof(message.header) + encoded_label_length, &message.question,
          sizeof(message.question));
-  memcpy(msg + sizeof(message.header) + message.label_length +
+
+  memcpy(msg + sizeof(message.header) + encoded_label_length +
              sizeof(message.question),
-         message.answer_label, message.answer_length);
-  memcpy(msg + sizeof(message.header) + message.label_length +
-             sizeof(message.question) + message.answer_length,
+         encoded_answer_label, encoded_answer_label_length);
+
+  memcpy(msg + sizeof(message.header) + encoded_label_length +
+             sizeof(message.question) + encoded_answer_label_length,
          &message.answer, sizeof(message.answer));
-  memcpy(msg + sizeof(message.header) + message.label_length +
-             sizeof(message.question) + message.answer_length +
+
+  memcpy(msg + sizeof(message.header) + encoded_label_length +
+             sizeof(message.question) + encoded_answer_label_length +
              sizeof(message.answer),
          &message.data, 4);
+
   return msg;
 }
 
@@ -350,20 +403,18 @@ void dns_answer_debug_string(DNSAnswer answer, char *tag, int sending) {
 void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
   dns_header_debug_string(message.header, tag, sending);
 
-  uint32_t label_len =
-      sending ? ntohl(message.label_length) : htonl(message.label_length);
-  uint32_t answer_len =
-      sending ? ntohl(message.answer_length) : htonl(message.answer_length);
+  size_t label_len = message.label_length;
+  size_t answer_len = message.answer_length;
   uint32_t data = sending ? ntohl(message.data) : htonl(message.data);
 
   print_with_tagline(tag, "\t\tlabel: %s", message.label);
-  print_with_tagline(tag, "\t\tlabel_length: %u", label_len);
+  print_with_tagline(tag, "\t\tlabel_length: %zu", label_len);
 
   dns_question_debug_string(message.question, tag, sending);
   dns_answer_debug_string(message.answer, tag, sending);
 
   print_with_tagline(tag, "\t\tanswer: %s", message.answer_label);
-  print_with_tagline(tag, "\t\tanswer_length: %u", answer_len);
+  print_with_tagline(tag, "\t\tanswer_length: %zu", answer_len);
 
   print_with_tagline(tag, "\tData");
   print_with_tagline(tag, "\tdata: %u", data);
