@@ -311,7 +311,7 @@ void dns_header_debug_string(DNSHeader header, char *tag, int sending) {
   print_with_tagline(tag, "\tHeader");
 
   Parse32 parse32 = sending ? &ntohl : &htonl;
-  Parse16 parse16 = sending ? &ntohs : &ntohl;
+  Parse16 parse16 = sending ? &ntohs : &ntohs;
 
   print_with_tagline(tag, "\t\tpacket_identifier: %u",
                      parse16(header.packet_identifier));
@@ -326,7 +326,7 @@ void dns_question_debug_string(DNSQuestion question, char *tag, int sending) {
   print_with_tagline(tag, "\tQuestion");
 
   Parse32 parse32 = sending ? &ntohl : &htonl;
-  Parse16 parse16 = sending ? &ntohs : &ntohl;
+  Parse16 parse16 = sending ? &ntohs : &ntohs;
 
   print_with_tagline(tag, "\t\ttype: %u", parse16(question.type));
   print_with_tagline(tag, "\t\tcls: %u", parse16(question.cls));
