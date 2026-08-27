@@ -168,7 +168,7 @@ DNSAnswer dns_answer_from_buffer(uint8_t *buffer, size_t length, int *offset) {
 
   uint32_t ttl = 0;
   memcpy(&ttl, current, 4);
-  answer.ttl = ntohs(ttl);
+  answer.ttl = ntohl(ttl);
   current += 4;
 
   uint16_t len = 0;
@@ -246,7 +246,7 @@ DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
 
   answer.type = htons(type);
   answer.cls = htons(cls);
-  answer.ttl = htons(ttl);
+  answer.ttl = htonl(ttl);
   answer.length = htons(length);
 
   return answer;
@@ -274,7 +274,7 @@ DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
 
   message.answer = answer;
 
-  message.data = htons(data);
+  message.data = htonl(data);
 
   return message;
 }
