@@ -340,7 +340,7 @@ void dns_answer_debug_string(DNSAnswer answer, char *tag, int sending) {
 
   print_with_tagline(tag, "\t\ttype: %u", parse16(answer.type));
   print_with_tagline(tag, "\t\tcls: %u", parse16(answer.cls));
-  print_with_tagline(tag, "\t\tttl: %lu", parse32(answer.ttl));
+  print_with_tagline(tag, "\t\tttl: %u", parse32(answer.ttl));
   print_with_tagline(tag, "\t\tlength: %u", parse16(answer.length));
 }
 
@@ -351,7 +351,7 @@ void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
   Parse16 parse16 = sending ? &ntohs : &htons;
 
   print_with_tagline(tag, "\t\tlabel: %s", message.label);
-  print_with_tagline(tag, "\t\tlabel_length: %lu",
+  print_with_tagline(tag, "\t\tlabel_length: %u",
                      parse32(message.label_length));
 
   dns_question_debug_string(message.question, tag, sending);
@@ -359,9 +359,9 @@ void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
   dns_answer_debug_string(message.answer, tag, sending);
 
   print_with_tagline(tag, "\t\tanswer: %s", message.answer_label);
-  print_with_tagline(tag, "\t\tanswer_length: %lu",
+  print_with_tagline(tag, "\t\tanswer_length: %u",
                      parse32(message.answer_length));
 
   print_with_tagline(tag, "\tData");
-  print_with_tagline(tag, "\tdata: %lu", parse32(message.data));
+  print_with_tagline(tag, "\tdata: %u", parse32(message.data));
 }
