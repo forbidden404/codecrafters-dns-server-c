@@ -1,0 +1,3 @@
+/Users/fssn/Projects/C/fs_dns_server/Debug/CMakeFiles/dns-server.dir
+/Users/fssn/Projects/C/fs_dns_server/Debug/CMakeFiles/edit_cache.dir
+/Users/fssn/Projects/C/fs_dns_server/Debug/CMakeFiles/rebuild_cache.dir

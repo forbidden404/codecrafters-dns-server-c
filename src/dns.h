@@ -1,7 +1,6 @@
 #ifndef _DNS_H
 #define _DNS_H
 
-#include <arpa/inet.h>
 #include <assert.h>
 #include <stdint.h>
 #include <sys/types.h>
