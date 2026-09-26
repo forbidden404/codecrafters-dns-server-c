@@ -72,11 +72,15 @@ int main() {
     }
 
     buffer[bytesRead] = '\0';
+    print_bytes((uint8_t *)buffer, bytesRead);
 
-    DNSMessage received_message =
-        dns_message_from_buffer((uint8_t *)buffer, bytesRead);
+    DNSMessage received_message;
+    DNSResult result = dns_message_from_buffer((uint8_t *)buffer, bytesRead,
+                                               &received_message);
 
-    dns_message_debug_string(received_message, "received_message", 0);
+    if (result != DNS_OK) {
+      perror("Malformed DNS message");
+    }
 
     uint16_t response_flags = received_message.header.flags | 0x8000;
     // if OPCODE != 0
@@ -87,18 +91,17 @@ int main() {
     DNSHeader header = dns_header_new(received_message.header.packet_identifier,
                                       response_flags, 1, 1, 0, 0);
     DNSQuestion question = dns_question_new(1, 1);
-    DNSAnswer answer = dns_answer_new(1, 1, 60, 4);
-    uint32_t data = ((uint32_t)8 << 24) | ((uint32_t)8 << 16) |
-                    ((uint32_t)8 << 8) | (uint32_t)8;
 
+    uint8_t rdata[] = {8, 8, 8, 8};
+
+    DNSAnswer answer = dns_answer_new(1, 1, 60, sizeof(rdata));
     DNSMessage message =
-        dns_message_new(header, received_message.label, question,
-                        received_message.label, answer, data);
-
-    dns_message_debug_string(message, "sent_message", 1);
+        dns_message_new(header, "codecrafters.io", question, "codecrafters.io",
+                        answer, rdata, sizeof(rdata));
 
     size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(message, &message_length);
+    print_bytes((uint8_t *)msg, message_length);
 
     // Send response
     if (sendto(udpSocket, msg, message_length, 0,

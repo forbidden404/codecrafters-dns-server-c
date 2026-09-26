@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-static_assert(1);
+static_assert(1, "");
 #pragma pack(push, 1)
 typedef struct dns_header {
   uint16_t packet_identifier;
@@ -42,7 +42,8 @@ typedef struct dns_message {
   char *answer_label;
   size_t answer_length;
   DNSAnswer answer;
-  uint32_t data;
+  uint8_t *rdata;
+  size_t rdata_length;
 } DNSMessage;
 #pragma pack(pop)
 
@@ -61,19 +62,29 @@ DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
                          uint16_t arcount);
 
+DNSHeader dns_header_from_buffer(uint8_t *buffer, size_t length, int *offset);
+
 uint8_t dns_header_get_flag(DNSHeader header, DNSFlagOption flag);
-void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value);
+void dns_header_set_flag(DNSHeader *header, DNSFlagOption flag, uint8_t value);
 
 DNSQuestion dns_question_new(uint16_t type, uint16_t cls);
 DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
                          uint16_t length);
 
 DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
-                           char *answer_label, DNSAnswer answer, uint32_t data);
+                           char *answer_label, DNSAnswer answer, uint8_t *rdata,
+                           size_t rdata_length);
 uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
 
-DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length);
+typedef enum {
+  DNS_OK = 0,
+  DNS_ERROR_TRUNCATED,
+  DNS_ERROR_INVALID_NAME,
+  DNS_ERROR_INvALID_PACKET,
+  DNS_ERROR_OUT_OF_MEMORY
+} DNSResult;
 
-void dns_message_debug_string(DNSMessage message, char *tag, int sending);
+DNSResult dns_message_from_buffer(const uint8_t *buffer, size_t length,
+                                  DNSMessage *message);
 
 #endif

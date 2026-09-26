@@ -2,7 +2,6 @@
 
 #include <arpa/inet.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -90,152 +89,24 @@ uint8_t dns_header_get_flag(DNSHeader header, DNSFlagOption flag) {
   return (header.flags & flag) >> (dns_header_get_flag_shift(flag));
 }
 
-void dns_header_set_flag(DNSHeader header, DNSFlagOption flag, uint8_t value) {
-  header.flags |= (flag & (value << dns_header_get_flag_shift(flag)));
+void dns_header_set_flag(DNSHeader *header, DNSFlagOption flag, uint8_t value) {
+  uint8_t shift = dns_header_get_flag_shift(flag);
+
+  header->flags &= ~flag;
+  header->flags |= (uint16_t)(value << shift) & flag;
 }
 
-uint8_t *decode_name(uint8_t *src, int *dst_length, int *consumed_length) {
-  if (src == NULL) {
-    return NULL;
-  }
-
-  *dst_length = 0;
-  *consumed_length = 0;
-
-  uint8_t *current = src;
-  uint8_t *name = calloc(1, 1);
-
-  if (name == NULL) {
-    return NULL;
-  }
-
-  while (*current != 0 && *dst_length < DNS_QNAME_MAX_LEN) {
-    uint8_t size = *current;
-
-    current++;
-    *consumed_length += 1;
-
-    if (*dst_length > 0) {
-      uint8_t *tmp = realloc(name, *dst_length + 2);
-
-      if (tmp == NULL) {
-        free(name);
-        return NULL;
-      }
-
-      name = tmp;
-      name[*dst_length] = '.';
-      *dst_length += 1;
-    }
-
-    uint8_t *tmp = realloc(name, *dst_length + size + 1);
-
-    if (tmp == NULL) {
-      free(name);
-      return NULL;
-    }
-
-    name = tmp;
-
-    memcpy(name + *dst_length, current, size);
-    *dst_length += size;
-
-    current += size;
-    *consumed_length += size;
-  }
-
-  if (*current == 0) {
-    *consumed_length += 1;
-    name[*dst_length] = '\0';
-  }
-
-  return name;
-}
-
-DNSQuestion dns_question_from_buffer(uint8_t *buffer, size_t length,
-                                     int *offset) {
-  DNSQuestion question;
-  memset(&question, 0, sizeof(question));
-
-  uint8_t *current = buffer + *offset;
-
-  uint16_t type = 0;
-  memcpy(&type, current, 2);
-  question.type = ntohs(type);
-  current += 2;
-
-  uint16_t cls = 0;
-  memcpy(&cls, current, 2);
-  question.cls = ntohs(cls);
-  current += 2;
-
-  *offset = current - buffer;
-
-  return question;
-}
-
-DNSAnswer dns_answer_from_buffer(uint8_t *buffer, size_t length, int *offset) {
-  DNSAnswer answer;
-  memset(&answer, 0, sizeof(answer));
-
-  uint8_t *current = buffer + *offset;
-
-  uint16_t type = 0;
-  memcpy(&type, current, 2);
-  answer.type = ntohs(type);
-  current += 2;
-
-  uint16_t cls = 0;
-  memcpy(&cls, current, 2);
-  answer.cls = ntohs(cls);
-  current += 2;
-
-  uint32_t ttl = 0;
-  memcpy(&ttl, current, 4);
-  answer.ttl = ntohl(ttl);
-  current += 4;
-
-  uint16_t len = 0;
-  memcpy(&len, current, 2);
-  answer.length = ntohs(len);
-  current += 2;
-
-  *offset = current - buffer;
-
-  return answer;
-}
-
-DNSMessage dns_message_from_buffer(uint8_t *buffer, size_t length) {
+DNSResult dns_message_from_buffer(const uint8_t *buffer, size_t length,
+                                  DNSMessage *message) {
   int offset = 0;
   DNSHeader header = dns_header_from_buffer((uint8_t *)buffer, length, &offset);
 
-  int question_name_len = 0;
-  int question_name_consumed = 0;
+  DNSQuestion question;
+  DNSAnswer answer;
 
-  uint8_t *question_name =
-      decode_name(buffer + offset, &question_name_len, &question_name_consumed);
+  *message = dns_message_new(header, "", question, "", answer, NULL, 0);
 
-  offset += question_name_consumed;
-
-  DNSQuestion question =
-      dns_question_from_buffer((uint8_t *)buffer, length, &offset);
-
-  int answer_name_len = 0;
-  int answer_name_consumed = 0;
-
-  uint8_t *answer_name =
-      decode_name(buffer + offset, &answer_name_len, &answer_name_consumed);
-
-  offset += answer_name_consumed;
-
-  DNSAnswer answer = dns_answer_from_buffer((uint8_t *)buffer, length, &offset);
-
-  uint32_t data = *(buffer + offset);
-
-  DNSMessage message = dns_message_new(header, (char *)question_name, question,
-                                       (char *)answer_name, answer, data);
-
-  return message;
+  return DNS_OK;
 }
 
 void encode_name(uint8_t *dst, size_t *dst_len, uint8_t *name) {
@@ -285,30 +156,56 @@ DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
 }
 
 DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
-                           char *answer_label, DNSAnswer answer,
-                           uint32_t data) {
+                           char *answer_label, DNSAnswer answer, uint8_t *data,
+                           size_t rdata_length) {
   DNSMessage message = {0};
+
   message.header = header;
 
   size_t name_length = strlen(label);
-
   message.label = calloc(1, name_length + 1);
-  strncpy(message.label, label, name_length);
+  if (message.label == NULL) {
+    return message;
+  }
+
+  memcpy(message.label, label, name_length);
   message.label_length = name_length;
 
   message.question = question;
 
   size_t answer_length = strlen(answer_label);
-
   if (answer_length > 0) {
-    message.answer_label = calloc(answer_length + 1, 1);
-    strncpy(message.answer_label, answer_label, answer_length);
-  }
-  message.answer_length = answer_length;
+    message.answer_label = calloc(1, answer_length + 1);
+    if (message.answer_label == NULL) {
+      free(message.label);
+      message.label = NULL;
+      return message;
+    }
 
+    memcpy(message.answer_label, answer_label, answer_length);
+  }
+
+  message.answer_length = answer_length;
   message.answer = answer;
 
-  message.data = htonl(data);
+  message.rdata_length = rdata_length;
+
+  if (rdata_length > 0) {
+    message.rdata = malloc(rdata_length);
+
+    if (message.rdata == NULL) {
+      free(message.label);
+      free(message.answer_label);
+
+      message.label = NULL;
+      message.answer_label = NULL;
+      message.rdata_length = 0;
+
+      return message;
+    }
+
+    memcpy(message.rdata, data, rdata_length);
+  }
 
   return message;
 }
@@ -325,97 +222,42 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
   encode_name(encoded_answer_label, &encoded_answer_label_length,
               (uint8_t *)message.answer_label);
 
-  *message_length = sizeof(message.header) + encoded_label_length +
-                    sizeof(message.question) + encoded_answer_label_length +
-                    sizeof(message.answer) + 4;
+  size_t header_length = sizeof(message.header);
+  size_t question_length = sizeof(message.question);
+  size_t answer_length = sizeof(message.answer);
+
+  *message_length = header_length + encoded_label_length + question_length +
+                    encoded_answer_label_length + answer_length +
+                    message.rdata_length;
 
   uint8_t *msg = calloc(1, *message_length);
 
-  memcpy(msg, &message.header, sizeof(message.header));
+  if (msg == NULL) {
+    *message_length = 0;
+    return NULL;
+  }
 
-  memcpy(msg + sizeof(message.header), encoded_label, encoded_label_length);
+  size_t offset = 0;
 
-  memcpy(msg + sizeof(message.header) + encoded_label_length, &message.question,
-         sizeof(message.question));
+  memcpy(msg + offset, &message.header, sizeof(message.header));
+  offset += sizeof(message.header);
 
-  memcpy(msg + sizeof(message.header) + encoded_label_length +
-             sizeof(message.question),
-         encoded_answer_label, encoded_answer_label_length);
+  memcpy(msg + offset, encoded_label, encoded_label_length);
+  offset += encoded_label_length;
 
-  memcpy(msg + sizeof(message.header) + encoded_label_length +
-             sizeof(message.question) + encoded_answer_label_length,
-         &message.answer, sizeof(message.answer));
+  memcpy(msg + offset, &message.question, sizeof(message.question));
+  offset += sizeof(message.question);
 
-  memcpy(msg + sizeof(message.header) + encoded_label_length +
-             sizeof(message.question) + encoded_answer_label_length +
-             sizeof(message.answer),
-         &message.data, 4);
+  memcpy(msg + offset, encoded_answer_label, encoded_answer_label_length);
+  offset += encoded_answer_label_length;
+
+  memcpy(msg + offset, &message.answer, sizeof(message.answer));
+  offset += sizeof(message.answer);
+
+  if (message.rdata_length > 0) {
+    memcpy(msg + offset, message.rdata, message.rdata_length);
+    offset += message.rdata_length;
+  }
 
   return msg;
-}
-
-#define print_with_tagline(t_, f_, ...)                                        \
-  printf("[%s]: " f_ "\n", t_, ##__VA_ARGS__)
-
-void dns_header_debug_string(DNSHeader header, char *tag, int sending) {
-  print_with_tagline(tag, "\tHeader");
-
-  uint16_t id = sending ? ntohs(header.packet_identifier)
-                        : htons(header.packet_identifier);
-  uint16_t flags = sending ? ntohs(header.flags) : htons(header.flags);
-  uint16_t qd = sending ? ntohs(header.qdcount) : htons(header.qdcount);
-  uint16_t an = sending ? ntohs(header.ancount) : htons(header.ancount);
-  uint16_t ns = sending ? ntohs(header.nscount) : htons(header.nscount);
-  uint16_t ar = sending ? ntohs(header.arcount) : htons(header.arcount);
-
-  print_with_tagline(tag, "\t\tpacket_identifier: %u", id);
-  print_with_tagline(tag, "\t\tflags: %u", flags);
-  print_with_tagline(tag, "\t\tqdcount: %u", qd);
-  print_with_tagline(tag, "\t\tancount: %u", an);
-  print_with_tagline(tag, "\t\tnscount: %u", ns);
-  print_with_tagline(tag, "\t\tarcount: %u", ar);
-}
-
-void dns_question_debug_string(DNSQuestion question, char *tag, int sending) {
-  print_with_tagline(tag, "\tQuestion");
-
-  uint16_t type = sending ? ntohs(question.type) : htons(question.cls);
-  uint16_t cls = sending ? ntohs(question.cls) : htons(question.cls);
-
-  print_with_tagline(tag, "\t\ttype: %u", type);
-  print_with_tagline(tag, "\t\tcls: %u", cls);
-}
-
-void dns_answer_debug_string(DNSAnswer answer, char *tag, int sending) {
-  print_with_tagline(tag, "\tAnswer");
-
-  uint16_t type = sending ? ntohs(answer.type) : htons(answer.type);
-  uint16_t cls = sending ? ntohs(answer.cls) : htons(answer.cls);
-  uint32_t ttl = sending ? ntohl(answer.ttl) : htonl(answer.ttl);
-  uint16_t len = sending ? ntohs(answer.length) : htons(answer.length);
-
-  print_with_tagline(tag, "\t\ttype: %u", type);
-  print_with_tagline(tag, "\t\tcls: %u", cls);
-  print_with_tagline(tag, "\t\tttl: %u", ttl);
-  print_with_tagline(tag, "\t\tlength: %u", len);
-}
-
-void dns_message_debug_string(DNSMessage message, char *tag, int sending) {
-  dns_header_debug_string(message.header, tag, sending);
-
-  size_t label_len = message.label_length;
-  size_t answer_len = message.answer_length;
-  uint32_t data = sending ? ntohl(message.data) : htonl(message.data);
-
-  print_with_tagline(tag, "\t\tlabel: %s", message.label);
-  print_with_tagline(tag, "\t\tlabel_length: %zu", label_len);
-
-  dns_question_debug_string(message.question, tag, sending);
-  dns_answer_debug_string(message.answer, tag, sending);
-
-  print_with_tagline(tag, "\t\tanswer: %s", message.answer_label);
-  print_with_tagline(tag, "\t\tanswer_length: %zu", answer_len);
-
-  print_with_tagline(tag, "\tData");
-  print_with_tagline(tag, "\tdata: %u", data);
 }
