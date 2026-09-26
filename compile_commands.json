@@ -1,1 +1,32 @@
-build/compile_commands.json
+[
+{
+  "directory": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build",
+  "command": "/usr/bin/cc   -std=gnu2x -arch arm64 -o CMakeFiles/dns-server.dir/src/dns.c.o -c /Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src/dns.c",
+  "file": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src/dns.c",
+  "output": "CMakeFiles/dns-server.dir/src/dns.c.o"
+},
+{
+  "directory": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build",
+  "command": "/usr/bin/cc   -std=gnu2x -arch arm64 -o CMakeFiles/dns-server.dir/src/main.c.o -c /Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src/main.c",
+  "file": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src/main.c",
+  "output": "CMakeFiles/dns-server.dir/src/main.c.o"
+},
+{
+  "directory": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-build",
+  "command": "/usr/bin/cc  -I/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-src/src -I/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-build -std=c11 -arch arm64 -o CMakeFiles/unity.dir/src/unity.c.o -c /Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-src/src/unity.c",
+  "file": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-src/src/unity.c",
+  "output": "_deps/unity-build/CMakeFiles/unity.dir/src/unity.c.o"
+},
+{
+  "directory": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/tests",
+  "command": "/usr/bin/cc  -I/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src -I/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-src/src -I/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/_deps/unity-build  -arch arm64 -o CMakeFiles/run_tests.dir/test_dns.c.o -c /Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/tests/test_dns.c",
+  "file": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/tests/test_dns.c",
+  "output": "tests/CMakeFiles/run_tests.dir/test_dns.c.o"
+},
+{
+  "directory": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/build/src",
+  "command": "/usr/bin/cc  -I/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src  -arch arm64 -o CMakeFiles/dns.dir/dns.c.o -c /Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src/dns.c",
+  "file": "/Users/fssn/Projects/Codecrafters/codecrafters-dns-server-c/src/dns.c",
+  "output": "src/CMakeFiles/dns.dir/dns.c.o"
+}
+]
