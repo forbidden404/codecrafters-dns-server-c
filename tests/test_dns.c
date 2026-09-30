@@ -1,5 +1,6 @@
 
 #include "dns.h"
+#include "list.h"
 #include "unity.h"
 
 #include <arpa/inet.h>
@@ -36,81 +37,77 @@ static uint32_t read_u32(const uint8_t *buffer) {
  */
 
 void test_dns_header_new_preserves_all_fields(void) {
-  DNSHeader header = dns_header_new(0x1234, 0x8180, 1, 1, 2, 3);
+  DNSHeader *header = dns_header_new(0x1234, 0x8180, 1, 1, 2, 3);
 
-  TEST_ASSERT_EQUAL_UINT16(0x1234, ntohs(header.packet_identifier));
+  TEST_ASSERT_EQUAL_UINT16(0x1234, header->packet_identifier);
 
-  TEST_ASSERT_EQUAL_UINT16(0x8180, ntohs(header.flags));
+  TEST_ASSERT_EQUAL_UINT16(0x8180, header->flags);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(header.qdcount));
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(header.ancount));
-  TEST_ASSERT_EQUAL_UINT16(2, ntohs(header.nscount));
-  TEST_ASSERT_EQUAL_UINT16(3, ntohs(header.arcount));
-}
-
-void test_dns_header_is_12_bytes(void) {
-  TEST_ASSERT_EQUAL_UINT(12, sizeof(DNSHeader));
+  TEST_ASSERT_EQUAL_UINT16(1, header->qdcount);
+  TEST_ASSERT_EQUAL_UINT16(1, header->ancount);
+  TEST_ASSERT_EQUAL_UINT16(2, header->nscount);
+  TEST_ASSERT_EQUAL_UINT16(3, header->arcount);
 }
 
 void test_dns_header_gets_qr_flag(void) {
-  DNSHeader header = dns_header_new(1, 0x8000, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0x8000, 0, 0, 0, 0);
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, QR));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, QR));
 }
 
 void test_dns_header_gets_rd_and_ra_flags(void) {
-  DNSHeader header = dns_header_new(1, 0x0180, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0x0180, 0, 0, 0, 0);
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, RD));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, RD));
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, RA));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, RA));
 }
 
 void test_dns_header_gets_opcode(void) {
   /*
    * OPCODE = 5
    */
-  DNSHeader header = dns_header_new(1, 0x2800, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0x2800, 0, 0, 0, 0);
 
-  TEST_ASSERT_EQUAL_UINT8(5, dns_header_get_flag(header, OPCODE));
+  TEST_ASSERT_EQUAL_UINT8(5, dns_header_get_flag(*header, OPCODE));
 }
 
 void test_dns_header_gets_rcode(void) {
   /*
    * RCODE = 3 (NXDOMAIN)
    */
-  DNSHeader header = dns_header_new(1, 0x0003, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0x0003, 0, 0, 0, 0);
 
-  TEST_ASSERT_EQUAL_UINT8(3, dns_header_get_flag(header, RCODE));
+  TEST_ASSERT_EQUAL_UINT8(3, dns_header_get_flag(*header, RCODE));
 }
 
 void test_dns_header_set_flag_sets_flag(void) {
-  DNSHeader header = dns_header_new(1, 0, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 0, 0, 0, 0);
 
-  dns_header_set_flag(&header, QR, 1);
+  dns_header_set_flag(header, QR, 1);
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, QR));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, QR));
 }
 
 void test_dns_header_set_flag_does_not_change_other_flags(void) {
-  DNSHeader header = dns_header_new(1, 0, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 0, 0, 0, 0);
 
-  dns_header_set_flag(&header, QR, 1);
-  dns_header_set_flag(&header, RD, 1);
+  dns_header_set_flag(header, QR, 1);
+  dns_header_set_flag(header, RD, 1);
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, QR));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, QR));
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, RD));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, RD));
 }
 
 void test_dns_header_set_flag_can_clear_flag(void) {
-  DNSHeader header = dns_header_new(1, 0x8000, 0, 0, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0x8000, 0, 0, 0, 0);
 
-  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(header, QR));
+  TEST_ASSERT_EQUAL_UINT8(1, dns_header_get_flag(*header, QR));
 
-  dns_header_set_flag(&header, QR, 0);
+  dns_header_set_flag(header, QR, 0);
 
-  TEST_ASSERT_EQUAL_UINT8(0, dns_header_get_flag(header, QR));
+  TEST_ASSERT_EQUAL_UINT8(0, dns_header_get_flag(*header, QR));
 }
 
 /*
@@ -127,19 +124,19 @@ void test_dns_header_from_buffer_parses_wire_header(void) {
       0x00, 0x00  /* ARCOUNT */
   };
 
-  int offset = 0;
+  size_t offset = 0;
 
-  DNSHeader header =
+  DNSHeader *header =
       dns_header_from_buffer((uint8_t *)packet, sizeof(packet), &offset);
 
-  TEST_ASSERT_EQUAL_UINT16(0x1234, header.packet_identifier);
+  TEST_ASSERT_EQUAL_UINT16(0x1234, header->packet_identifier);
 
-  TEST_ASSERT_EQUAL_UINT16(0x8180, header.flags);
+  TEST_ASSERT_EQUAL_UINT16(0x8180, header->flags);
 
-  TEST_ASSERT_EQUAL_UINT16(1, header.qdcount);
-  TEST_ASSERT_EQUAL_UINT16(1, header.ancount);
-  TEST_ASSERT_EQUAL_UINT16(0, header.nscount);
-  TEST_ASSERT_EQUAL_UINT16(0, header.arcount);
+  TEST_ASSERT_EQUAL_UINT16(1, header->qdcount);
+  TEST_ASSERT_EQUAL_UINT16(1, header->ancount);
+  TEST_ASSERT_EQUAL_UINT16(0, header->nscount);
+  TEST_ASSERT_EQUAL_UINT16(0, header->arcount);
 
   TEST_ASSERT_EQUAL_INT(12, offset);
 }
@@ -148,21 +145,21 @@ void test_dns_header_from_buffer_rejects_truncated_header(void) {
   const uint8_t packet[] = {0x12, 0x34, 0x81, 0x80, 0x00, 0x01,
                             0x00, 0x01, 0x00, 0x00, 0x00};
 
-  int offset = 0;
+  size_t offset = 0;
 
-  DNSHeader header =
+  DNSHeader *header =
       dns_header_from_buffer((uint8_t *)packet, sizeof(packet), &offset);
 
   /*
    * A truncated header should not be interpreted as
    * a valid DNS header.
    */
-  TEST_ASSERT_EQUAL_UINT16(0, header.packet_identifier);
-  TEST_ASSERT_EQUAL_UINT16(0, header.flags);
-  TEST_ASSERT_EQUAL_UINT16(0, header.qdcount);
-  TEST_ASSERT_EQUAL_UINT16(0, header.ancount);
-  TEST_ASSERT_EQUAL_UINT16(0, header.nscount);
-  TEST_ASSERT_EQUAL_UINT16(0, header.arcount);
+  TEST_ASSERT_EQUAL_UINT16(0, header->packet_identifier);
+  TEST_ASSERT_EQUAL_UINT16(0, header->flags);
+  TEST_ASSERT_EQUAL_UINT16(0, header->qdcount);
+  TEST_ASSERT_EQUAL_UINT16(0, header->ancount);
+  TEST_ASSERT_EQUAL_UINT16(0, header->nscount);
+  TEST_ASSERT_EQUAL_UINT16(0, header->arcount);
 }
 
 /*
@@ -170,47 +167,43 @@ void test_dns_header_from_buffer_rejects_truncated_header(void) {
  */
 
 void test_dns_question_new_preserves_type_and_class(void) {
-  DNSQuestion question = dns_question_new(1, /* A */
-                                          1  /* IN */
+  DNSQuestion *question = dns_question_new("", 1, /* A */
+                                           1      /* IN */
   );
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(question.type));
+  TEST_ASSERT_EQUAL_UINT16(1, question->type);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(question.cls));
+  TEST_ASSERT_EQUAL_UINT16(1, question->cls);
 }
 
 void test_dns_question_supports_aaaa(void) {
-  DNSQuestion question = dns_question_new(28, /* AAAA */
-                                          1   /* IN */
+  DNSQuestion *question = dns_question_new("", 28, /* AAAA */
+                                           1       /* IN */
   );
 
-  TEST_ASSERT_EQUAL_UINT16(28, ntohs(question.type));
+  TEST_ASSERT_EQUAL_UINT16(28, question->type);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(question.cls));
-}
-
-void test_dns_question_is_4_bytes(void) {
-  TEST_ASSERT_EQUAL_UINT(4, sizeof(DNSQuestion));
+  TEST_ASSERT_EQUAL_UINT16(1, question->cls);
 }
 
 /*
  * Answer
  */
 
-void test_dns_answer_new_preserves_all_fields(void) {
-  DNSAnswer answer = dns_answer_new(1,    /* A */
-                                    1,    /* IN */
-                                    3600, /* TTL */
-                                    4     /* RDLENGTH */
-  );
+void test_dns_resource_new_preserves_all_fields(void) {
+  DNSResource *answer = dns_resource_new("", 1, /* A */
+                                         1,     /* IN */
+                                         3600,  /* TTL */
+                                         4,     /* RDLENGTH */
+                                         NULL);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(answer.type));
+  TEST_ASSERT_EQUAL_UINT16(1, answer->type);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(answer.cls));
+  TEST_ASSERT_EQUAL_UINT16(1, answer->class);
 
-  TEST_ASSERT_EQUAL_UINT32(3600, ntohl(answer.ttl));
+  TEST_ASSERT_EQUAL_UINT32(3600, answer->ttl);
 
-  TEST_ASSERT_EQUAL_UINT16(4, ntohs(answer.length));
+  TEST_ASSERT_EQUAL_UINT16(4, answer->rdlength);
 }
 
 void test_dns_answer_uses_32_bit_ttl(void) {
@@ -218,19 +211,15 @@ void test_dns_answer_uses_32_bit_ttl(void) {
    * This intentionally uses a value that exposes the difference
    * between htons() and htonl().
    */
-  DNSAnswer answer = dns_answer_new(1, 1, 0x12345678, 4);
+  DNSResource *answer = dns_resource_new("", 1, 1, 0x12345678, 4, NULL);
 
-  TEST_ASSERT_EQUAL_UINT32(0x12345678, ntohl(answer.ttl));
+  TEST_ASSERT_EQUAL_UINT32(0x12345678, answer->ttl);
 }
 
 void test_dns_answer_supports_maximum_ttl(void) {
-  DNSAnswer answer = dns_answer_new(1, 1, UINT32_MAX, 4);
+  DNSResource *answer = dns_resource_new("", 1, 1, UINT32_MAX, 4, NULL);
 
-  TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, ntohl(answer.ttl));
-}
-
-void test_dns_answer_is_10_bytes(void) {
-  TEST_ASSERT_EQUAL_UINT(10, sizeof(DNSAnswer));
+  TEST_ASSERT_EQUAL_UINT32(UINT32_MAX, answer->ttl);
 }
 
 /*
@@ -240,43 +229,48 @@ void test_dns_answer_is_10_bytes(void) {
 void test_dns_message_new_copies_rdata(void) {
   uint8_t rdata[] = {0x08, 0x08, 0x08, 0x08};
 
-  DNSHeader header = dns_header_new(0x1234, 0x8180, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(0x1234, 0x8180, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
-  DNSAnswer answer = dns_answer_new(1, 1, 300, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 1, 1, 300, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
 
-  TEST_ASSERT_NOT_NULL(message.rdata);
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
-  TEST_ASSERT_EQUAL_UINT(sizeof(rdata), message.rdata_length);
+  DNSResource *entry = list_first_entry(message->answers, DNSResource, list);
 
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(rdata, message.rdata, sizeof(rdata));
+  TEST_ASSERT_NOT_NULL(entry);
 
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  TEST_ASSERT_EQUAL_UINT(sizeof(rdata), entry->rdlength);
+
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(rdata, entry->rdata, sizeof(rdata));
+
+  dns_message_free(message);
 }
 
 void test_dns_message_new_supports_zero_length_rdata(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
-  DNSAnswer answer = dns_answer_new(1, 1, 60, 0);
+  DNSResource *answer = dns_resource_new("example.com", 1, 1, 60, 0, NULL);
 
-  DNSMessage message = dns_message_new(header, "example.com", question,
-                                       "example.com", answer, NULL, 0);
+  DNSMessage *message = dns_message_new(header);
 
-  TEST_ASSERT_EQUAL_UINT(0, message.rdata_length);
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
-  TEST_ASSERT_NULL(message.rdata);
+  DNSResource *entry = list_first_entry(message->answers, DNSResource, list);
 
-  free(message.label);
-  free(message.answer_label);
+  TEST_ASSERT_EQUAL_UINT(0, entry->rdlength);
+
+  TEST_ASSERT_NULL(entry->rdata);
+
+  dns_message_free(message);
 }
 
 /*
@@ -297,21 +291,23 @@ void test_dns_message_new_supports_zero_length_rdata(void) {
  */
 
 void test_dns_message_serializes_header(void) {
-  DNSHeader header = dns_header_new(0x1234, 0x8180, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(0x1234, 0x8180, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
   uint8_t rdata[] = {8, 8, 8, 8};
 
-  DNSAnswer answer = dns_answer_new(1, 1, 300, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 1, 1, 300, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -328,27 +324,27 @@ void test_dns_message_serializes_header(void) {
   TEST_ASSERT_EQUAL_UINT16(0, read_u16(buffer + 10));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_serializes_qname_correctly(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("www.example.com", 1, 1);
 
   uint8_t rdata[] = {8, 8, 8, 8};
 
-  DNSAnswer answer = dns_answer_new(1, 1, 60, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("www.example.com", 1, 1, 60, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "www.example.com", question, "example.com",
-                      answer, rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -358,27 +354,27 @@ void test_dns_message_serializes_qname_correctly(void) {
   TEST_ASSERT_EQUAL_UINT8_ARRAY(expected, buffer + 12, sizeof(expected));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_serializes_question_correctly(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(28, 1);
+  DNSQuestion *question = dns_question_new("example.com", 28, 1);
 
   uint8_t rdata[16] = {0};
 
-  DNSAnswer answer = dns_answer_new(28, 1, 300, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 28, 1, 300, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -395,27 +391,27 @@ void test_dns_message_serializes_question_correctly(void) {
   TEST_ASSERT_EQUAL_UINT16(1, read_u16(buffer + 27));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_serializes_answer_fields(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
   uint8_t rdata[] = {8, 8, 8, 8};
 
-  DNSAnswer answer = dns_answer_new(1, 1, 0x12345678, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 1, 1, 0x12345678, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -438,15 +434,13 @@ void test_dns_message_serializes_answer_fields(void) {
   TEST_ASSERT_EQUAL_UINT16(4, read_u16(buffer + answer_offset + 8));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_serializes_variable_length_rdata(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
   /*
    * Deliberately arbitrary data. The DNS message layer should
@@ -454,15 +448,17 @@ void test_dns_message_serializes_variable_length_rdata(void) {
    */
   uint8_t rdata[] = {0xde, 0xad, 0xbe, 0xef, 0x01, 0x02, 0x03};
 
-  DNSAnswer answer = dns_answer_new(1, 1, 300, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 1, 1, 300, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -488,24 +484,24 @@ void test_dns_message_serializes_variable_length_rdata(void) {
   TEST_ASSERT_EQUAL_UINT8_ARRAY(rdata, buffer + rdata_offset, sizeof(rdata));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_serializes_zero_length_rdata(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
-  DNSAnswer answer = dns_answer_new(1, 1, 60, 0);
+  DNSResource *answer = dns_resource_new("example.com", 1, 1, 60, 0, NULL);
 
-  DNSMessage message = dns_message_new(header, "example.com", question,
-                                       "example.com", answer, NULL, 0);
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -525,28 +521,28 @@ void test_dns_message_serializes_zero_length_rdata(void) {
   TEST_ASSERT_EQUAL_UINT16(0, read_u16(buffer + answer_offset + 8));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_serializes_aaaa_rdata(void) {
-  DNSHeader header = dns_header_new(1, 0, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(1, 0, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(28, 1);
+  DNSQuestion *question = dns_question_new("example.com", 28, 1);
 
   uint8_t rdata[] = {0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01};
 
-  DNSAnswer answer = dns_answer_new(28, 1, 300, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 28, 1, 300, sizeof(rdata), rdata);
 
-  DNSMessage message =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *message = dns_message_new(header);
+
+  list_add_tail(&question->list, message->questions);
+  list_add_tail(&answer->list, message->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(message, &length);
+  uint8_t *buffer = dns_message_to_buffer(*message, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
@@ -558,9 +554,7 @@ void test_dns_message_serializes_aaaa_rdata(void) {
   TEST_ASSERT_EQUAL_UINT8_ARRAY(rdata, buffer + rdata_offset, sizeof(rdata));
 
   free(buffer);
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 /*
@@ -611,106 +605,115 @@ void test_dns_message_from_buffer_parses_a_response(void) {
        */
       0x08, 0x08, 0x08, 0x08};
 
-  DNSMessage message;
+  DNSMessage *message;
   DNSResult result =
       dns_message_from_buffer((uint8_t *)packet, sizeof(packet), &message);
 
   TEST_ASSERT_EQUAL(result, DNS_OK);
 
-  TEST_ASSERT_EQUAL_UINT16(0x1234, message.header.packet_identifier);
+  TEST_ASSERT_EQUAL_UINT16(0x1234, message->header.packet_identifier);
 
-  TEST_ASSERT_EQUAL_UINT16(0x8180, message.header.flags);
+  TEST_ASSERT_EQUAL_UINT16(0x8180, message->header.flags);
 
-  TEST_ASSERT_EQUAL_UINT16(1, message.header.qdcount);
+  TEST_ASSERT_EQUAL_UINT16(1, message->header.qdcount);
 
-  TEST_ASSERT_EQUAL_UINT16(1, message.header.ancount);
+  TEST_ASSERT_EQUAL_UINT16(1, message->header.ancount);
 
-  TEST_ASSERT_EQUAL_STRING("example.com", message.label);
+  DNSQuestion *question =
+      list_first_entry(message->questions, DNSQuestion, list);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(message.question.type));
+  TEST_ASSERT_EQUAL_STRING("example.com", question->qname);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(message.question.cls));
+  TEST_ASSERT_EQUAL_UINT16(1, question->type);
 
-  TEST_ASSERT_EQUAL_STRING("example.com", message.answer_label);
+  TEST_ASSERT_EQUAL_UINT16(1, question->cls);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(message.answer.type));
+  DNSResource *answer = list_first_entry(message->answers, DNSResource, list);
 
-  TEST_ASSERT_EQUAL_UINT16(1, ntohs(message.answer.cls));
+  TEST_ASSERT_EQUAL_STRING("example.com", answer->name);
 
-  TEST_ASSERT_EQUAL_UINT32(300, ntohl(message.answer.ttl));
+  TEST_ASSERT_EQUAL_UINT16(1, answer->type);
 
-  TEST_ASSERT_EQUAL_UINT16(4, ntohs(message.answer.length));
+  TEST_ASSERT_EQUAL_UINT16(1, answer->class);
 
-  TEST_ASSERT_EQUAL_UINT(4, message.rdata_length);
+  TEST_ASSERT_EQUAL_UINT32(300, answer->ttl);
+
+  TEST_ASSERT_EQUAL_UINT16(4, answer->rdlength);
 
   const uint8_t expected_rdata[] = {8, 8, 8, 8};
 
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(expected_rdata, message.rdata,
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(expected_rdata, answer->rdata,
                                 sizeof(expected_rdata));
 
-  free(message.label);
-  free(message.answer_label);
-  free(message.rdata);
+  dns_message_free(message);
 }
 
 void test_dns_message_round_trip_preserves_rdata(void) {
-  DNSHeader header = dns_header_new(0xCAFE, 0x8180, 1, 1, 0, 0);
+  DNSHeader *header = dns_header_new(0xCAFE, 0x8180, 1, 1, 0, 0);
 
-  DNSQuestion question = dns_question_new(1, 1);
+  DNSQuestion *question = dns_question_new("example.com", 1, 1);
 
   uint8_t rdata[] = {0xde, 0xad, 0xbe, 0xef, 0x01, 0x02, 0x03};
 
-  DNSAnswer answer = dns_answer_new(1, 1, 300, sizeof(rdata));
+  DNSResource *answer =
+      dns_resource_new("example.com", 1, 1, 300, sizeof(rdata), rdata);
 
-  DNSMessage original =
-      dns_message_new(header, "example.com", question, "example.com", answer,
-                      rdata, sizeof(rdata));
+  DNSMessage *original = dns_message_new(header);
+
+  list_add_tail(&question->list, original->questions);
+  list_add_tail(&answer->list, original->answers);
 
   size_t length = 0;
 
-  uint8_t *buffer = dns_message_to_buffer(original, &length);
+  uint8_t *buffer = dns_message_to_buffer(*original, &length);
 
   TEST_ASSERT_NOT_NULL(buffer);
 
-  DNSMessage parsed;
+  DNSMessage *parsed;
   DNSResult result = dns_message_from_buffer(buffer, length, &parsed);
 
   TEST_ASSERT_EQUAL(result, DNS_OK);
 
-  TEST_ASSERT_EQUAL_STRING(original.label, parsed.label);
+  DNSQuestion *original_question =
+      list_first_entry(original->questions, DNSQuestion, list);
+  DNSQuestion *parsed_question =
+      list_first_entry(parsed->questions, DNSQuestion, list);
 
-  TEST_ASSERT_EQUAL_STRING(original.answer_label, parsed.answer_label);
+  TEST_ASSERT_EQUAL_STRING(original_question->qname, parsed_question->qname);
 
-  TEST_ASSERT_EQUAL_UINT16(original.header.packet_identifier,
-                           parsed.header.packet_identifier);
+  DNSResource *original_answer =
+      list_first_entry(original->answers, DNSResource, list);
+  DNSResource *parsed_answer =
+      list_first_entry(parsed->answers, DNSResource, list);
 
-  TEST_ASSERT_EQUAL_UINT16(original.header.flags, parsed.header.flags);
+  TEST_ASSERT_EQUAL_STRING(original_answer->name, parsed_answer->name);
 
-  TEST_ASSERT_EQUAL_UINT16(original.question.type, parsed.question.type);
+  TEST_ASSERT_EQUAL_UINT16(original->header.packet_identifier,
+                           parsed->header.packet_identifier);
 
-  TEST_ASSERT_EQUAL_UINT16(original.question.cls, parsed.question.cls);
+  TEST_ASSERT_EQUAL_UINT16(original->header.flags, parsed->header.flags);
 
-  TEST_ASSERT_EQUAL_UINT16(original.answer.type, parsed.answer.type);
+  TEST_ASSERT_EQUAL_UINT16(original_question->type, parsed_question->type);
 
-  TEST_ASSERT_EQUAL_UINT16(original.answer.cls, parsed.answer.cls);
+  TEST_ASSERT_EQUAL_UINT16(original_question->cls, parsed_question->cls);
 
-  TEST_ASSERT_EQUAL_UINT32(original.answer.ttl, parsed.answer.ttl);
+  TEST_ASSERT_EQUAL_UINT16(original_answer->type, parsed_answer->type);
 
-  TEST_ASSERT_EQUAL_UINT16(original.answer.length, parsed.answer.length);
+  TEST_ASSERT_EQUAL_UINT16(original_answer->class, parsed_answer->class);
 
-  TEST_ASSERT_EQUAL_UINT(sizeof(rdata), parsed.rdata_length);
+  TEST_ASSERT_EQUAL_UINT32(original_answer->ttl, parsed_answer->ttl);
 
-  TEST_ASSERT_EQUAL_UINT8_ARRAY(rdata, parsed.rdata, sizeof(rdata));
+  TEST_ASSERT_EQUAL_UINT16(original_answer->rdlength, parsed_answer->rdlength);
+
+  TEST_ASSERT_EQUAL_UINT(sizeof(rdata), parsed_answer->rdlength);
+
+  TEST_ASSERT_EQUAL_UINT8_ARRAY(rdata, parsed_answer->rdata, sizeof(rdata));
 
   free(buffer);
 
-  free(original.label);
-  free(original.answer_label);
-  free(original.rdata);
+  dns_message_free(original);
 
-  free(parsed.label);
-  free(parsed.answer_label);
-  free(parsed.rdata);
+  dns_message_free(parsed);
 }
 
 /*
@@ -721,7 +724,6 @@ int main(void) {
   UNITY_BEGIN();
 
   RUN_TEST(test_dns_header_new_preserves_all_fields);
-  RUN_TEST(test_dns_header_is_12_bytes);
 
   RUN_TEST(test_dns_header_gets_qr_flag);
   RUN_TEST(test_dns_header_gets_rd_and_ra_flags);
@@ -737,12 +739,10 @@ int main(void) {
 
   RUN_TEST(test_dns_question_new_preserves_type_and_class);
   RUN_TEST(test_dns_question_supports_aaaa);
-  RUN_TEST(test_dns_question_is_4_bytes);
 
-  RUN_TEST(test_dns_answer_new_preserves_all_fields);
+  RUN_TEST(test_dns_resource_new_preserves_all_fields);
   RUN_TEST(test_dns_answer_uses_32_bit_ttl);
   RUN_TEST(test_dns_answer_supports_maximum_ttl);
-  RUN_TEST(test_dns_answer_is_10_bytes);
 
   RUN_TEST(test_dns_message_new_copies_rdata);
   RUN_TEST(test_dns_message_new_supports_zero_length_rdata);

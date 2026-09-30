@@ -5,8 +5,8 @@
 #include <stdint.h>
 #include <sys/types.h>
 
-static_assert(1, "");
-#pragma pack(push, 1)
+#include "list.h"
+
 typedef struct dns_header {
   uint16_t packet_identifier;
   uint16_t flags;
@@ -15,37 +15,32 @@ typedef struct dns_header {
   uint16_t nscount;
   uint16_t arcount;
 } DNSHeader;
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 typedef struct dns_question {
+  char *qname;
   uint16_t type;
   uint16_t cls;
+  struct list_head list;
 } DNSQuestion;
-#pragma pack(pop)
 
-#pragma pack(push, 1)
-typedef struct dns_answer {
+typedef struct dns_resource {
+  char *name;
   uint16_t type;
-  uint16_t cls;
+  uint16_t class;
   uint32_t ttl;
-  uint16_t length;
-} DNSAnswer;
-#pragma pack(pop)
+  uint16_t rdlength;
+  uint8_t *rdata;
+  struct list_head list;
+} DNSResource;
 
-#pragma pack(push, 1)
 typedef struct dns_message {
   DNSHeader header;
-  char *label;
-  size_t label_length;
-  DNSQuestion question;
-  char *answer_label;
-  size_t answer_length;
-  DNSAnswer answer;
-  uint8_t *rdata;
-  size_t rdata_length;
+
+  struct list_head *questions;
+  struct list_head *answers;
+  struct list_head *authorities;
+  struct list_head *additionals;
 } DNSMessage;
-#pragma pack(pop)
 
 typedef enum flags_option {
   QR = 0b1000000000000000,
@@ -58,33 +53,48 @@ typedef enum flags_option {
   RCODE = 0b0000000000001111,
 } DNSFlagOption;
 
-DNSHeader dns_header_new(uint16_t packet_identifier, uint16_t flags,
-                         uint16_t qdcount, uint16_t ancount, uint16_t nscount,
-                         uint16_t arcount);
-
-DNSHeader dns_header_from_buffer(uint8_t *buffer, size_t length, int *offset);
-
-uint8_t dns_header_get_flag(DNSHeader header, DNSFlagOption flag);
-void dns_header_set_flag(DNSHeader *header, DNSFlagOption flag, uint8_t value);
-
-DNSQuestion dns_question_new(uint16_t type, uint16_t cls);
-DNSAnswer dns_answer_new(uint16_t type, uint16_t cls, uint32_t ttl,
-                         uint16_t length);
-
-DNSMessage dns_message_new(DNSHeader header, char *label, DNSQuestion question,
-                           char *answer_label, DNSAnswer answer, uint8_t *rdata,
-                           size_t rdata_length);
-uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
-
 typedef enum {
   DNS_OK = 0,
   DNS_ERROR_TRUNCATED,
   DNS_ERROR_INVALID_NAME,
-  DNS_ERROR_INvALID_PACKET,
+  DNS_ERROR_INVALID_PACKET,
   DNS_ERROR_OUT_OF_MEMORY
 } DNSResult;
 
+// Header declarations
+DNSHeader *dns_header_new(uint16_t packet_identifier, uint16_t flags,
+                          uint16_t qdcount, uint16_t ancount, uint16_t nscount,
+                          uint16_t arcount);
+
+DNSHeader *dns_header_from_buffer(uint8_t *buffer, size_t length,
+                                  size_t *offset);
+
+uint8_t dns_header_get_flag(DNSHeader header, DNSFlagOption flag);
+void dns_header_set_flag(DNSHeader *header, DNSFlagOption flag, uint8_t value);
+
+// Question declarations
+DNSQuestion *dns_question_new(char *qname, uint16_t type, uint16_t cls);
+DNSResult dns_questions_from_buffer(uint8_t *buffer, size_t count,
+                                    struct list_head *list, size_t length,
+                                    size_t *offset);
+
+// Resource declarations
+DNSResource *dns_resource_new(char *name, uint16_t type, uint16_t class,
+                              uint32_t ttl, uint16_t rdlength, uint8_t *rdata);
+DNSResult dns_resources_from_buffer(uint8_t *buffer, size_t count,
+                                    struct list_head *list, size_t length,
+                                    size_t *offset);
+
+// Message declarations
+DNSMessage *dns_message_new(DNSHeader *header);
+uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
+void dns_message_free(DNSMessage *message);
+
+// Response declaration
+DNSMessage *dns_response_for_message(DNSMessage *message,
+                                     size_t *message_length);
+
 DNSResult dns_message_from_buffer(const uint8_t *buffer, size_t length,
-                                  DNSMessage *message);
+                                  DNSMessage **message);
 
 #endif
