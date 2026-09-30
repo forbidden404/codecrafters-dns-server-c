@@ -707,9 +707,18 @@ DNSMessage *dns_response_for_message(DNSMessage *message,
 
   DNSHeader *header =
       dns_header_new(message->header.packet_identifier, response_flags,
-                     message->header.qdcount, message->header.ancount,
+                     message->header.qdcount, message->header.qdcount,
                      message->header.nscount, message->header.arcount);
+
   DNSMessage *response = dns_message_new(header);
+
+  response->questions = message->questions;
+  DNSQuestion *question;
+  list_for_each_entry(question, response->questions, list) {
+    uint8_t rdata[] = {0x08, 0x08, 0x08, 0x08};
+    DNSResource *answer = dns_resource_new(question->qname, 1, 1, 60, 4, rdata);
+    list_add_tail(&answer->list, response->answers);
+  }
 
   return response;
 }
