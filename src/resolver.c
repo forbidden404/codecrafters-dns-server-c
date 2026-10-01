@@ -2,6 +2,8 @@
 #include "dns.h"
 #include "list.h"
 #include <arpa/inet.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -65,6 +67,39 @@ DNSMessage *dns_resolver_handle_message(DNSResolver *resolver,
 
 DNSMessage *returning_processor(char *address, DNSMessage *message) {
   return message;
+}
+
+long long safe_strtonum(const char *nptr, long long minval, long long maxval,
+                        const char **errstr) {
+  long long val;
+  char *endptr;
+
+  if (minval > maxval) {
+    if (errstr)
+      *errstr = "invalid range";
+    errno = EINVAL;
+    return 0;
+  }
+
+  errno = 0;
+  val = strtoll(nptr, &endptr, 10);
+
+  if (errno == ERANGE || val < minval || val > maxval) {
+    if (errstr)
+      *errstr = (val < minval) ? "too small" : "too large";
+    return 0;
+  }
+
+  if (endptr == nptr || *endptr != '\0') {
+    if (errstr)
+      *errstr = "invalid digits";
+    errno = EINVAL;
+    return 0;
+  }
+
+  if (errstr)
+    *errstr = NULL;
+  return val;
 }
 
 #define BUFFER_SIZE 1024
@@ -155,5 +190,5 @@ DNSMessage *working_processor(char *address, DNSMessage *message) {
 }
 
 DNSResolverProcessor dns_resolver_make_default_processor() {
-  return returning_processor;
+  return working_processor;
 }
