@@ -117,7 +117,7 @@ DNSMessage *working_processor(char *address, DNSMessage *message) {
     s_port++;
 
     const char *errstr;
-    port = strtonum(s_port, 0, UINT32_MAX, &errstr);
+    port = safe_strtonum(s_port, 0, UINT32_MAX, &errstr);
     if (errstr != NULL) {
       perror(errstr);
       return NULL;
