@@ -91,8 +91,7 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length);
 void dns_message_free(DNSMessage *message);
 
 // Response declaration
-DNSMessage *dns_response_for_message(DNSMessage *message,
-                                     size_t *message_length);
+DNSMessage *dns_response_for_message(DNSMessage *message);
 
 DNSResult dns_message_from_buffer(const uint8_t *buffer, size_t length,
                                   DNSMessage **message);

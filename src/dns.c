@@ -697,8 +697,7 @@ uint8_t *dns_message_to_buffer(DNSMessage message, size_t *message_length) {
   return buffer;
 }
 
-DNSMessage *dns_response_for_message(DNSMessage *message,
-                                     size_t *message_length) {
+DNSMessage *dns_response_for_message(DNSMessage *message) {
   uint16_t response_flags = message->header.flags | 0x8000;
   // if OPCODE != 0
   if (dns_header_get_flag(message->header, OPCODE) != 0) {
@@ -712,12 +711,13 @@ DNSMessage *dns_response_for_message(DNSMessage *message,
 
   DNSMessage *response = dns_message_new(header);
 
-  response->questions = message->questions;
   DNSQuestion *question;
-  list_for_each_entry(question, response->questions, list) {
+  DNSQuestion *next;
+  list_for_each_entry_safe(question, next, message->questions, list) {
     uint8_t rdata[] = {0x08, 0x08, 0x08, 0x08};
     DNSResource *answer = dns_resource_new(question->qname, 1, 1, 60, 4, rdata);
     list_add_tail(&answer->list, response->answers);
+    list_add_tail(&question->list, response->questions);
   }
 
   return response;

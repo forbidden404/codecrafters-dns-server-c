@@ -26,6 +26,8 @@ struct list_head {
     *(volatile typeof(x) *)&(x) = (val);                                       \
   } while (0)
 
+#define READ_ONCE(x) (*(volatile typeof(x) *)&(x))
+
 /**
  * INIT_LIST_HEAD - Initialize a list_head structure
  * @list: list_head structure to be initialized.

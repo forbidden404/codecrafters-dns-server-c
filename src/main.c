@@ -1,7 +1,9 @@
 #include "dns.h"
+#include "resolver.h"
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <getopt.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <stdio.h>
@@ -20,7 +22,25 @@ void print_bytes(uint8_t *buffer, size_t length) {
   printf("\n");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  int opt;
+  int opt_index = 0;
+  char *resolver_address = NULL;
+
+  static struct option options[] = {{"resolver", required_argument, 0, 0},
+                                    {0, 0, 0, 0}};
+
+  opt = getopt_long(argc, argv, "", options, &opt_index);
+
+  if (opt != -1) {
+    switch (opt) {
+    case 0:
+      if (optarg) {
+        resolver_address = strdup(optarg);
+      }
+    }
+  }
+
   // Disable output buffering
   setbuf(stdout, NULL);
   setbuf(stderr, NULL);
@@ -62,6 +82,12 @@ int main() {
   char buffer[512];
   socklen_t clientAddrLen = sizeof(clientAddress);
 
+  DNSResolver *resolver = NULL;
+  if (resolver_address != NULL) {
+    resolver = dns_resolver_new(resolver_address,
+                                dns_resolver_make_default_processor());
+  }
+
   while (1) {
     // Receive data
     bytesRead = recvfrom(udpSocket, buffer, sizeof(buffer), 0,
@@ -79,10 +105,15 @@ int main() {
       perror("Malformed DNS message");
     }
 
-    size_t message_length = 0;
-    DNSMessage *response =
-        dns_response_for_message(received_message, &message_length);
+    DNSMessage *response;
 
+    if (resolver) {
+      response = dns_resolver_handle_message(resolver, received_message);
+    } else {
+      response = dns_response_for_message(received_message);
+    }
+
+    size_t message_length = 0;
     uint8_t *msg = dns_message_to_buffer(*response, &message_length);
 
     // Send response
