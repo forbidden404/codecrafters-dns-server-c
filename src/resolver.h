@@ -1,13 +1,12 @@
 #include "dns.h"
 
-typedef DNSMessage *(*DNSResolverProcessor)(char *address, DNSMessage *request);
+typedef struct dns_resolver DNSResolver;
 
-typedef struct dns_resolver {
-  char *address;
-  DNSResolverProcessor processor;
-} DNSResolver;
+typedef DNSMessage *(*DNSResolverProcessor)(DNSResolver *resolver,
+                                            DNSMessage *request);
 
 DNSResolver *dns_resolver_new(char *address, DNSResolverProcessor processor);
+void dns_resolver_free(DNSResolver *resolver);
 
 DNSMessage *dns_resolver_handle_message(DNSResolver *resolver,
                                         DNSMessage *request);

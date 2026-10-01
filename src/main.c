@@ -125,6 +125,7 @@ int main(int argc, char *argv[]) {
   }
 
   close(udpSocket);
+  dns_resolver_free(resolver);
 
   return 0;
 }

@@ -12,13 +12,47 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+typedef struct dns_resolver {
+  char *address;
+  int socket_fd;
+  DNSResolverProcessor processor;
+} DNSResolver;
+
 DNSResolver *dns_resolver_new(char *address, DNSResolverProcessor processor) {
   DNSResolver *resolver = calloc(1, sizeof(*resolver));
 
+  if (resolver == NULL) {
+    return NULL;
+  }
+
   resolver->address = strdup(address);
+
+  if (resolver->address == NULL) {
+    free(resolver);
+    return NULL;
+  }
+
+  resolver->socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+
+  if (resolver->socket_fd < 0) {
+    free(resolver->address);
+    free(resolver);
+    return NULL;
+  }
+
   resolver->processor = processor;
 
   return resolver;
+}
+
+void dns_resolver_free(DNSResolver *resolver) {
+  if (resolver == NULL) {
+    return;
+  }
+
+  close(resolver->socket_fd);
+  free(resolver->address);
+  free(resolver);
 }
 
 DNSMessage *dns_resolver_handle_message(DNSResolver *resolver,
@@ -42,7 +76,7 @@ DNSMessage *dns_resolver_handle_message(DNSResolver *resolver,
 
     list_add_tail(&tmp->list, message->questions);
 
-    DNSMessage *response = resolver->processor(resolver->address, message);
+    DNSMessage *response = resolver->processor(resolver, message);
 
     // Extract answer
     DNSResource *answer;
@@ -104,51 +138,45 @@ long long safe_strtonum(const char *nptr, long long minval, long long maxval,
 
 #define BUFFER_SIZE 1024
 
-DNSMessage *working_processor(char *address, DNSMessage *message) {
+DNSMessage *working_processor(DNSResolver *resolver, DNSMessage *message) {
   // Parse address into <ip>:<port>
-  char *delimiter = ":";
+  char *delimiter = strchr(resolver->address, ':');
 
-  char *ip = address;
-  char *s_port = strchr(address, delimiter[0]);
-  uint32_t port = 0;
-
-  if (s_port != NULL) {
-    *s_port = '\0';
-    s_port++;
-
-    const char *errstr;
-    port = safe_strtonum(s_port, 0, UINT32_MAX, &errstr);
-    if (errstr != NULL) {
-      perror(errstr);
-      return NULL;
-    }
-  } else {
-    perror("Failed to parse address into <ip>:<port>");
+  if (delimiter == NULL) {
     return NULL;
   }
 
-  int sockfd;
-  uint8_t buffer[BUFFER_SIZE];
+  char ip[INET_ADDRSTRLEN];
+
+  size_t ip_length = delimiter - resolver->address;
+
+  if (ip_length >= sizeof(ip)) {
+    return NULL;
+  }
+
+  memcpy(ip, resolver->address, ip_length);
+  ip[ip_length] = '\0';
+
+  const char *s_port = delimiter + 1;
+  uint16_t port = 0;
+
+  const char *errstr;
+  port = safe_strtonum(s_port, 0, UINT32_MAX, &errstr);
+  if (errstr != NULL) {
+    perror(errstr);
+    return NULL;
+  }
 
   struct sockaddr_in server_addr;
-  socklen_t addr_len = sizeof(server_addr);
-
-  // Create a UDP Socket
-  sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-  if (sockfd < 0) {
-    perror("Socket creation failed");
-    return NULL;
-  }
 
   // Clear and set up server address structure
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
-  server_addr.sin_port = port;
+  server_addr.sin_port = htons(port);
 
   // Convert IP address from text to binary
   if (inet_pton(AF_INET, ip, &server_addr.sin_addr) <= 0) {
     perror("Invalid address / Address not supported");
-    close(sockfd);
     return NULL;
   }
 
@@ -156,21 +184,34 @@ DNSMessage *working_processor(char *address, DNSMessage *message) {
   size_t message_length = 0;
   uint8_t *buffer_message = dns_message_to_buffer(*message, &message_length);
 
-  int bytes_sent = sendto(sockfd, buffer_message, message_length, 0,
-                          (struct sockaddr *)&server_addr, addr_len);
+  int bytes_sent =
+      sendto(resolver->socket_fd, buffer_message, message_length, 0,
+             (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+  free(buffer_message);
+
   if (bytes_sent < 0) {
     perror("Message transmission failed");
-    close(sockfd);
+    return NULL;
+  }
+
+  if ((size_t)bytes_sent != message_length) {
+    perror("Incomplete DNS message sent");
     return NULL;
   }
 
   // Wait and receive response
-  int bytes_received = recvfrom(sockfd, buffer, BUFFER_SIZE - 1, 0,
-                                (struct sockaddr *)&server_addr, &addr_len);
+  uint8_t buffer[BUFFER_SIZE];
+
+  struct sockaddr_in response_addr = {0};
+  socklen_t response_addr_length = sizeof(response_addr);
+
+  int bytes_received =
+      recvfrom(resolver->socket_fd, buffer, sizeof(buffer), 0,
+               (struct sockaddr *)&response_addr, &response_addr_length);
 
   if (bytes_received < 0) {
     perror("Receive failed");
-    close(sockfd);
     return NULL;
   }
 
@@ -181,11 +222,9 @@ DNSMessage *working_processor(char *address, DNSMessage *message) {
 
   if (result != DNS_OK) {
     perror("Deserialization failed");
-    close(sockfd);
     return NULL;
   }
 
-  close(sockfd);
   return received_message;
 }
 

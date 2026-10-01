@@ -32,7 +32,7 @@ static uint32_t read_u32(const uint8_t *buffer) {
   return ntohl(value);
 }
 
-DNSMessage *mock_processor(char *address, DNSMessage *message) {
+DNSMessage *mock_processor(DNSResolver *resolver, DNSMessage *message) {
   DNSQuestion *question;
   size_t count = 0;
   list_for_each_entry(question, message->questions, list) {
@@ -59,7 +59,6 @@ void test_dns_resolver_initializes(void) {
 
   // Assert
   TEST_ASSERT_NOT_NULL(resolver);
-  TEST_ASSERT_EQUAL_STRING("1.1.1.1:53", resolver->address);
 }
 
 void test_dns_resolver_processes_dns_message(void) {
