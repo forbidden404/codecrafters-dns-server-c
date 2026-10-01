@@ -67,30 +67,113 @@ DNSHeader *dns_header_from_buffer(uint8_t *buffer, size_t length,
   return header;
 }
 
-uint8_t *decode_name(uint8_t *src, size_t *dst_length,
-                     size_t *consumed_length) {
-  if (src == NULL) {
+uint8_t *decode_name(const uint8_t *buffer, size_t buffer_length, size_t offset,
+                     size_t *dst_length, size_t *consumed_length) {
+  if (buffer == NULL || dst_length == NULL || consumed_length == NULL ||
+      offset >= buffer_length) {
     return NULL;
   }
 
   *dst_length = 0;
   *consumed_length = 0;
 
-  uint8_t *current = src;
-  uint8_t *name = calloc(1, 1);
+  char *name = calloc(1, 1);
 
   if (name == NULL) {
     return NULL;
   }
 
-  while (*current != 0 && *dst_length < DNS_QNAME_MAX_LEN) {
-    uint8_t size = *current;
+  size_t current = offset;
+  size_t name_length = 0;
+  size_t consumed = 0;
+  int jumped = 0;
+
+  /*
+   * Prevent malformed packets from creating an infinite
+   * compression-pointer loop.
+   */
+  size_t pointer_count = 0;
+
+  while (current < buffer_length) {
+    uint8_t byte = buffer[current];
+
+    /*
+     * End of an uncompressed name.
+     */
+    if (byte == 0) {
+      if (!jumped) {
+        consumed += 1;
+      }
+
+      name[name_length] = '\0';
+
+      *dst_length = name_length;
+      *consumed_length = consumed;
+
+      return (uint8_t *)name;
+    }
+
+    /*
+     * Compression pointer.
+     *
+     * 11xxxxxx xxxxxxxx
+     */
+    if ((byte & 0xC0) == 0xC0) {
+      if (current + 1 >= buffer_length) {
+        free(name);
+        return NULL;
+      }
+
+      uint16_t pointer =
+          ((uint16_t)(buffer[current] & 0x3F) << 8) | buffer[current + 1];
+
+      if (pointer >= buffer_length) {
+        free(name);
+        return NULL;
+      }
+
+      /*
+       * The pointer itself occupies two bytes in the
+       * original encoded name.
+       */
+      if (!jumped) {
+        consumed += 2;
+      }
+
+      current = pointer;
+      jumped = 1;
+
+      if (++pointer_count > 128) {
+        free(name);
+        return NULL;
+      }
+
+      continue;
+    }
+
+    /*
+     * Anything other than 00 or 11xxxxxx must be a
+     * normal label length.
+     */
+    if ((byte & 0xC0) != 0) {
+      free(name);
+      return NULL;
+    }
+
+    size_t label_length = byte;
 
     current++;
-    *consumed_length += 1;
 
-    if (*dst_length > 0) {
-      uint8_t *tmp = realloc(name, *dst_length + 2);
+    if (current + label_length > buffer_length) {
+      free(name);
+      return NULL;
+    }
+
+    /*
+     * Add '.' between labels.
+     */
+    if (name_length > 0) {
+      char *tmp = realloc(name, name_length + 1 + label_length + 1);
 
       if (tmp == NULL) {
         free(name);
@@ -98,32 +181,35 @@ uint8_t *decode_name(uint8_t *src, size_t *dst_length,
       }
 
       name = tmp;
-      name[*dst_length] = '.';
-      *dst_length += 1;
+      name[name_length++] = '.';
+    } else {
+      char *tmp = realloc(name, label_length + 1);
+
+      if (tmp == NULL) {
+        free(name);
+        return NULL;
+      }
+
+      name = tmp;
     }
 
-    uint8_t *tmp = realloc(name, *dst_length + size + 1);
+    memcpy(name + name_length, buffer + current, label_length);
 
-    if (tmp == NULL) {
+    name_length += label_length;
+    current += label_length;
+
+    if (!jumped) {
+      consumed += 1 + label_length;
+    }
+
+    if (name_length > DNS_QNAME_MAX_LEN) {
       free(name);
       return NULL;
     }
-
-    name = tmp;
-
-    memcpy(name + *dst_length, current, size);
-    *dst_length += size;
-
-    current += size;
-    *consumed_length += size;
   }
 
-  if (*current == 0) {
-    *consumed_length += 1;
-    name[*dst_length] = '\0';
-  }
-
-  return name;
+  free(name);
+  return NULL;
 }
 
 DNSResult dns_question_from_buffer(uint8_t *buffer, size_t length,
@@ -132,7 +218,7 @@ DNSResult dns_question_from_buffer(uint8_t *buffer, size_t length,
   size_t qname_consumed = 0;
 
   question->qname =
-      (char *)decode_name(buffer + *offset, &qname_len, &qname_consumed);
+      (char *)decode_name(buffer, length, *offset, &qname_len, &qname_consumed);
   *offset += qname_consumed;
 
   uint8_t *current = buffer + *offset;
@@ -181,7 +267,7 @@ DNSResult dns_resource_from_buffer(uint8_t *buffer, size_t length,
   size_t name_consumed = 0;
 
   resource->name =
-      (char *)decode_name(buffer + *offset, &name_len, &name_consumed);
+      (char *)decode_name(buffer, length, *offset, &name_len, &name_consumed);
   *offset += name_consumed;
 
   uint8_t *current = buffer + *offset;
